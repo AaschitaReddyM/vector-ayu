@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClimaHealth — SMART on FHIR Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0f1e;--surface:#111827;--card:#1a2235;--card-hover:#1f2a42;
+  --border:rgba(255,255,255,.06);--border-glow:rgba(0,212,170,.15);
+  --teal:#00d4aa;--teal-dim:rgba(0,212,170,.15);--coral:#ff6b6b;
+  --amber:#ffb347;--blue:#4ea8de;--purple:#a78bfa;
+  --text:#f0f4f8;--text-dim:#8892a4;--text-muted:#5a6478;
+  --radius:14px;--radius-sm:10px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+
+/* ── Animated Background ── */
+canvas#particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* ── Gradient Orbs ── */
+.orb{position:fixed;border-radius:50%;filter:blur(120px);opacity:.18;z-index:0;pointer-events:none}
+.orb-1{width:600px;height:600px;background:radial-gradient(circle,#00d4aa,transparent 70%);top:-150px;left:-100px;animation:orbFloat1 18s ease-in-out infinite}
+.orb-2{width:500px;height:500px;background:radial-gradient(circle,#4ea8de,transparent 70%);bottom:-100px;right:-80px;animation:orbFloat2 22s ease-in-out infinite}
+.orb-3{width:350px;height:350px;background:radial-gradient(circle,#a78bfa,transparent 70%);top:40%;right:15%;animation:orbFloat3 15s ease-in-out infinite}
+@keyframes orbFloat1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(60px,40px) scale(1.1)}}
+@keyframes orbFloat2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,-60px) scale(1.15)}}
+@keyframes orbFloat3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,30px) scale(0.9)}}
+
+/* ── Grid Overlay ── */
+.grid-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);
+  background-size:60px 60px;
+}
+
+/* ── Main Container ── */
+.login-container{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;width:100%;max-width:520px;padding:20px}
+
+/* ── Hero / Branding ── */
+.hero{text-align:center;margin-bottom:42px;animation:fadeInUp .8s ease-out}
+.hero-logo{width:80px;height:80px;margin:0 auto 24px;position:relative}
+.hero-logo svg{width:80px;height:80px;filter:drop-shadow(0 0 30px rgba(0,212,170,.3))}
+.hero-logo .ring{position:absolute;top:-10px;left:-10px;width:100px;height:100px;border-radius:50%;border:1.5px solid rgba(0,212,170,.15);animation:ringPulse 3s ease-in-out infinite}
+.hero-logo .ring-2{position:absolute;top:-20px;left:-20px;width:120px;height:120px;border-radius:50%;border:1px solid rgba(0,212,170,.08);animation:ringPulse 3s ease-in-out infinite .5s}
+@keyframes ringPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.08);opacity:1}}
+.hero-brand{font-size:2.4rem;font-weight:800;letter-spacing:-.5px;margin-bottom:14px}
+.hero-brand .accent{color:var(--teal)}
+.hero-tagline{font-size:1rem;font-weight:400;color:var(--text-dim);line-height:1.6;max-width:440px;margin:0 auto}
+.hero-tagline strong{color:var(--text);font-weight:600}
+.hero-subtitle{font-size:.82rem;color:var(--text-muted);margin-top:10px;line-height:1.5}
+
+/* ── Login Card ── */
+.login-card{width:100%;background:rgba(26,34,53,.55);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:36px 32px 32px;position:relative;overflow:hidden;animation:fadeInUp .8s ease-out .15s both;box-shadow:0 24px 80px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.03) inset}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,170,.3),rgba(78,168,222,.3),transparent)}
+.login-card::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle at 30% 20%,rgba(0,212,170,.04),transparent 50%);pointer-events:none}
+
+.card-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.card-label .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ── Form Elements ── */
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-size:.75rem;font-weight:500;color:var(--text-dim);margin-bottom:7px;letter-spacing:.3px}
+.form-select,.form-input{width:100%;padding:13px 16px;background:rgba(17,24,39,.6);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-sm);color:var(--text);font-family:'Inter',sans-serif;font-size:.88rem;font-weight:400;transition:.3s;appearance:none;-webkit-appearance:none;outline:none}
+.form-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238892a4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px;cursor:pointer}
+.form-select option{background:var(--surface);color:var(--text)}
+.form-select:focus,.form-input:focus{border-color:rgba(0,212,170,.4);box-shadow:0 0 0 3px rgba(0,212,170,.08)}
+.form-select:hover,.form-input:hover{border-color:rgba(255,255,255,.14)}
+
+/* ── Provider Info Card ── */
+.provider-info{display:flex;align-items:center;gap:14px;padding:14px 16px;background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.1);border-radius:var(--radius-sm);margin-bottom:22px}
+.provider-avatar{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--teal),var(--blue));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0;color:#0a0f1e}
+.provider-details h4{font-size:.88rem;font-weight:600;line-height:1.3}
+.provider-details p{font-size:.74rem;color:var(--text-dim);margin-top:2px}
+.provider-details .speciality{color:var(--teal);font-weight:500}
+
+/* ── Connect Button ── */
+.btn-connect{width:100%;padding:16px 24px;border:none;border-radius:var(--radius-sm);background:linear-gradient(135deg,#00d4aa,#00b894,#00a884);color:#0a0f1e;font-family:'Inter',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:.3px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-connect:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,212,170,.35)}
+.btn-connect:active{transform:translateY(0);box-shadow:0 4px 16px rgba(0,212,170,.2)}
+.btn-connect .btn-shimmer{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transition:none}
+.btn-connect:hover .btn-shimmer{animation:shimmer .8s ease-in-out}
+@keyframes shimmer{0%{left:-100%}100%{left:100%}}
+.btn-connect svg{width:20px;height:20px}
+
+/* ── Divider ── */
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0}
+.divider span{font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.06)}
+
+/* ── Security Badges ── */
+.security-badges{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.security-badge{display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(17,24,39,.4);border:1px solid rgba(255,255,255,.05);border-radius:8px;transition:.25s}
+.security-badge:hover{border-color:rgba(255,255,255,.1);background:rgba(17,24,39,.6)}
+.security-badge .badge-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.75rem;flex-shrink:0}
+.security-badge .badge-icon.green{background:rgba(0,212,170,.1);color:var(--teal)}
+.security-badge .badge-icon.blue{background:rgba(78,168,222,.1);color:var(--blue)}
+.security-badge .badge-icon.purple{background:rgba(167,139,250,.1);color:var(--purple)}
+.security-badge .badge-icon.amber{background:rgba(255,179,71,.1);color:var(--amber)}
+.security-badge .badge-text{font-size:.68rem;font-weight:500;color:var(--text-dim);line-height:1.3}
+.security-badge .badge-text strong{display:block;color:var(--text);font-size:.72rem;margin-bottom:1px}
+
+/* ── Connection Sequence Overlay ── */
+.connection-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1000;display:none;align-items:center;justify-content:center;flex-direction:column;background:rgba(10,15,30,.92);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px)}
+.connection-overlay.active{display:flex}
+.connection-box{max-width:480px;width:90%;text-align:center}
+.connection-logo{margin-bottom:36px;opacity:0;animation:fadeInScale .5s ease-out forwards}
+.connection-logo svg{width:56px;height:56px;filter:drop-shadow(0 0 24px rgba(0,212,170,.4))}
+.connection-brand{font-size:1.4rem;font-weight:700;margin-top:12px}
+.connection-brand .accent{color:var(--teal)}
+
+.conn-steps{text-align:left;margin:0 auto;max-width:400px}
+.conn-step{display:flex;align-items:flex-start;gap:14px;padding:14px 0;opacity:0;transform:translateY(10px)}
+.conn-step.visible{opacity:1;transform:translateY(0);transition:all .4s ease-out}
+.conn-step .step-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem;border:2px solid var(--text-muted);color:var(--text-muted);transition:.3s}
+.conn-step.done .step-icon{border-color:var(--teal);background:rgba(0,212,170,.12);color:var(--teal)}
+.conn-step .step-text{font-size:.88rem;font-weight:400;color:var(--text-dim);padding-top:3px;transition:.3s}
+.conn-step.done .step-text{color:var(--text)}
+.conn-step .step-text .substep{font-size:.74rem;color:var(--text-muted);margin-top:4px;display:none}
+.conn-step.done .step-text .substep{display:block;color:var(--text-dim)}
+
+/* Spinner */
+.conn-step.loading .step-icon{border-color:var(--teal);border-top-color:transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Checkmark SVG animation */
+.checkmark{width:14px;height:14px;display:none}
+.conn-step.done .checkmark{display:block}
+.conn-step.done .spinner-icon{display:none}
+
+/* ── Progress Bar ── */
+.conn-progress{width:100%;max-width:400px;height:3px;background:rgba(255,255,255,.06);border-radius:4px;margin:32px auto 0;overflow:hidden}
+.conn-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--blue));border-radius:4px;transition:width .6s ease-out}
+
+/* ── Footer ── */
+.login-footer{margin-top:32px;text-align:center;animation:fadeInUp .8s ease-out .3s both}
+.login-footer p{font-size:.72rem;color:var(--text-muted);line-height:1.6}
+.login-footer a{color:var(--teal);text-decoration:none;font-weight:500}
+.login-footer a:hover{text-decoration:underline}
+
+/* ── Animations ── */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInScale{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+
+/* ── Version badge ── */
+.version-badge{position:fixed;bottom:20px;right:24px;z-index:10;font-size:.65rem;color:var(--text-muted);display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(17,24,39,.6);border:1px solid rgba(255,255,255,.05);border-radius:20px;backdrop-filter:blur(10px)}
+.version-badge .live-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);animation:blink 2s ease-in-out infinite}
+
+/* ── Responsive ── */
+@media(max-width:580px){
+  .login-container{padding:16px}
+  .login-card{padding:28px 22px 24px}
+  .hero-brand{font-size:1.8rem}
+  .hero-tagline{font-size:.88rem}
+  .security-badges{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Particle Canvas -->
+<canvas id="particles"></canvas>
+
+<!-- Gradient Orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- Grid Overlay -->
+<div class="grid-overlay"></div>
+
+<!-- Main Login Content -->
+<div class="login-container">
+
+  <!-- Hero Section -->
+  <div class="hero">
+    <div class="hero-logo">
+      <div class="ring"></div>
+      <div class="ring-2"></div>
+      <svg viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="14" stroke="url(#gLogin)" stroke-width="2"/>
+        <path d="M16 8v8l6 4" stroke="url(#gLogin)" stroke-width="2" stroke-linecap="round"/>
+        <!-- Climate data lines -->
+        <path d="M6 18c2-3 4 1 6-2s3 2 5-1 4 1 6-2" stroke="url(#gLogin)" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+        <path d="M8 22c2-2 3 1 5-1s3 2 4 0" stroke="url(#gLogin)" stroke-width=".8" stroke-linecap="round" opacity=".25"/>
+        <defs>
+          <linearGradient id="gLogin" x1="0" y1="0" x2="32" y2="32">
+            <stop stop-color="#00d4aa"/>
+            <stop offset="1" stop-color="#4ea8de"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="hero-brand">Clima<span class="accent">Health</span></div>
+    <div class="hero-tagline"><strong>The Climate Intelligence Layer for Healthcare Operations</strong></div>
+    <div class="hero-subtitle">Predictive analytics middleware connecting environmental data with clinical records</div>
+  </div>
+
+  <!-- Login Card -->
+  <div class="login-card">
+    <div class="card-label"><span class="dot"></span> SMART on FHIR Launch Sequence</div>
+
+    <!-- Hospital System Selector -->
+    <div class="form-group">
+      <label class="form-label">Hospital System</label>
+      <select class="form-select" id="hospitalSelect">
+        <option value="parkland" selected>Parkland Health — Dallas</option>
+        <option value="utsw">UT Southwestern Medical Center</option>
+        <option value="baylor">Baylor Scott & White Health</option>
+        <option value="texashealth">Texas Health Resources</option>
+        <option value="methodist">Methodist Health System</option>
+      </select>
+    </div>
+
+    <!-- Provider ID -->
+    <div class="form-group">
+      <label class="form-label">Provider ID</label>
+      <input type="text" class="form-input" id="providerID" value="DR-AMO-2847" readonly style="cursor:default;color:var(--teal);font-weight:500">
+    </div>
+
+    <!-- Provider Info -->
+    <div class="provider-info">
+      <div class="provider-avatar">AO</div>
+      <div class="provider-details">
+        <h4>Dr. Amara Okafor, MD</h4>
+        <p class="speciality">Pulmonology & Internal Medicine</p>
+        <p>Parkland Health — DFW Metro Network</p>
+      </div>
+    </div>
+
+    <!-- Connect Button -->
+    <button class="btn-connect" id="btnConnect" onclick="startConnection()">
+      <span class="btn-shimmer"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Connect via SMART on FHIR
+    </button>
+
+    <!-- Divider -->
+    <div class="divider"><span>Secured Connection</span></div>
+
+    <!-- Security Badges -->
+    <div class="security-badges">
+      <div class="security-badge">
+        <div class="badge-icon green">🛡️</div>
+        <div class="badge-text"><strong>HIPAA Compliant</strong>PHI Safeguards Active</div>
+      </div>
+      <div class="security-badge">
+        <div class="badge-icon blue">🔒</div>
+        <div class="badge-text"><strong>SOC 2 Type II</strong>Audited & Certified</div>
+      </div>
+      <div class="security-badge">
+        <div class="badge-icon purple">🔐</div>
+        <div class="badge-text"><strong>TLS 1.3 Encrypted</strong>End-to-End Security</div>
+      </div>
+      <div class="security-badge">
+        <div class="badge-icon amber">🏥</div>
+        <div class="badge-text"><strong>HL7 FHIR v4</strong>Certified Integration</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="login-footer">
+    <p>ClimaHealth Layer v2.4.1 · DFW Metro Region<br>
+    <a href="#">Documentation</a> · <a href="#">Privacy Policy</a> · <a href="#">Support</a></p>
+  </div>
+
+</div>
+
+<!-- Version Badge -->
+<div class="version-badge">
+  <span class="live-dot"></span>
+  System Status: Operational
+</div>
+
+<!-- Connection Sequence Overlay -->
+<div class="connection-overlay" id="connectionOverlay">
+  <div class="connection-box">
+    <div class="connection-logo">
+      <svg viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="14" stroke="url(#gConn)" stroke-width="2"/>
+        <path d="M16 8v8l6 4" stroke="url(#gConn)" stroke-width="2" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="gConn" x1="0" y1="0" x2="32" y2="32">
+            <stop stop-color="#00d4aa"/>
+            <stop offset="1" stop-color="#4ea8de"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div class="connection-brand">Clima<span class="accent">Health</span></div>
+    </div>
+
+    <div class="conn-steps" id="connSteps">
+      <div class="conn-step" data-step="0">
+        <div class="step-icon"><span class="spinner-icon">⋯</span><svg class="checkmark" viewBox="0 0 14 14"><polyline points="2.5 7.5 5.5 10.5 11.5 4" fill="none" stroke="#00d4aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="step-text">Establishing secure OAuth 2.0 tunnel...<div class="substep">TLS 1.3 handshake complete · 256-bit AES encryption</div></div>
+      </div>
+      <div class="conn-step" data-step="1">
+        <div class="step-icon"><span class="spinner-icon">⋯</span><svg class="checkmark" viewBox="0 0 14 14"><polyline points="2.5 7.5 5.5 10.5 11.5 4" fill="none" stroke="#00d4aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="step-text">Authenticating provider credentials...<div class="substep">Provider DR-AMO-2847 verified · Scope: patient/*.read</div></div>
+      </div>
+      <div class="conn-step" data-step="2">
+        <div class="step-icon"><span class="spinner-icon">⋯</span><svg class="checkmark" viewBox="0 0 14 14"><polyline points="2.5 7.5 5.5 10.5 11.5 4" fill="none" stroke="#00d4aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="step-text">Loading FHIR Resources: Patient, Observation, MedicationRequest...<div class="substep">2,847 patient records · 48,291 observations synced</div></div>
+      </div>
+      <div class="conn-step" data-step="3">
+        <div class="step-icon"><span class="spinner-icon">⋯</span><svg class="checkmark" viewBox="0 0 14 14"><polyline points="2.5 7.5 5.5 10.5 11.5 4" fill="none" stroke="#00d4aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="step-text">Launching ClimaHealth Layer...<div class="substep">Multi-Task AI engine initialized · 3 prediction heads active</div></div>
+      </div>
+    </div>
+
+    <div class="conn-progress"><div class="conn-progress-fill" id="connProgressFill"></div></div>
+  </div>
+</div>
+
+<script>
+// ── Particle System ──
+(function(){
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [], mouse = {x: null, y: null};
+
+  function resize(){
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+  class Particle {
+    constructor(){
+      this.reset();
+    }
+    reset(){
+      this.x = Math.random() * w;
+      this.y = Math.random() * h;
+      this.size = Math.random() * 1.8 + 0.3;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.speedY = (Math.random() - 0.5) * 0.3;
+      this.opacity = Math.random() * 0.4 + 0.1;
+      this.color = Math.random() > 0.6 ? '#00d4aa' : Math.random() > 0.5 ? '#4ea8de' : '#a78bfa';
+    }
+    update(){
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if(this.x < 0 || this.x > w) this.speedX *= -1;
+      if(this.y < 0 || this.y > h) this.speedY *= -1;
+    }
+    draw(){
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.globalAlpha = this.opacity;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Create particles
+  const count = Math.min(80, Math.floor(w * h / 15000));
+  for(let i = 0; i < count; i++) particles.push(new Particle());
+
+  function drawLines(){
+    for(let i = 0; i < particles.length; i++){
+      for(let j = i + 1; j < particles.length; j++){
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < 150){
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(0,212,170,${0.06 * (1 - dist/150)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+      // Mouse interaction
+      if(mouse.x !== null){
+        const dx = particles[i].x - mouse.x;
+        const dy = particles[i].y - mouse.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < 200){
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.strokeStyle = `rgba(0,212,170,${0.1 * (1 - dist/200)})`;
+          ctx.lineWidth = 0.6;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function animate(){
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => { p.update(); p.draw(); });
+    drawLines();
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+// ── Connection Sequence ──
+function startConnection(){
+  const overlay = document.getElementById('connectionOverlay');
+  const steps = document.querySelectorAll('.conn-step');
+  const progressFill = document.getElementById('connProgressFill');
+  const btn = document.getElementById('btnConnect');
+
+  // Disable button
+  btn.disabled = true;
+  btn.style.opacity = '.6';
+  btn.style.cursor = 'not-allowed';
+
+  // Show overlay
+  overlay.classList.add('active');
+
+  const delays = [0, 800, 1800, 2600];
+  const doneTimes = [700, 1700, 2500, 3200];
+  const progressValues = [20, 50, 80, 100];
+
+  // Animate each step
+  steps.forEach((step, i) => {
+    // Show step (loading state)
+    setTimeout(() => {
+      step.classList.add('visible', 'loading');
+      progressFill.style.width = progressValues[i] + '%';
+    }, delays[i]);
+
+    // Complete step (done state)
+    setTimeout(() => {
+      step.classList.remove('loading');
+      step.classList.add('done');
+    }, doneTimes[i]);
+  });
+
+  // Redirect after all steps complete
+  setTimeout(() => {
+    progressFill.style.width = '100%';
+  }, 3200);
+
+  setTimeout(() => {
+    window.location.href = 'dashboard.html';
+  }, 3800);
+}
+
+// ── Dynamic hospital name in provider info ──
+document.getElementById('hospitalSelect').addEventListener('change', function(){
+  const names = {
+    parkland: 'Parkland Health — DFW Metro Network',
+    utsw: 'UT Southwestern Medical Center — DFW',
+    baylor: 'Baylor Scott & White — North Texas',
+    texashealth: 'Texas Health Resources — DFW',
+    methodist: 'Methodist Health System — Dallas'
+  };
+  document.querySelector('.provider-details p:last-child').textContent = names[this.value] || names.parkland;
+});
+</script>
+</body>
+</html>

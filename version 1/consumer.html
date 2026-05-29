@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ClimaHealth — Your Health-Weather Score</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0f1e;--surface:#111827;--card:#1a2235;--card-hover:#1f2a42;
+  --border:rgba(255,255,255,.06);--border-glow:rgba(0,212,170,.15);
+  --teal:#00d4aa;--teal-dim:rgba(0,212,170,.15);
+  --coral:#ff6b6b;--amber:#ffb347;--blue:#4ea8de;--purple:#a78bfa;
+  --text:#f0f4f8;--text-dim:#8892a4;--text-muted:#5a6478;
+  --radius:14px;--radius-sm:10px;
+}
+body{
+  font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:40px 20px;
+  background-image:
+    radial-gradient(ellipse 600px 400px at 30% 20%, rgba(0,212,170,.04), transparent),
+    radial-gradient(ellipse 500px 500px at 70% 80%, rgba(78,168,222,.03), transparent);
+}
+
+/* ── Phone Frame ── */
+.phone-frame{
+  width:393px;min-height:852px;background:var(--bg);border-radius:44px;
+  border:2.5px solid rgba(255,255,255,.08);overflow:hidden;position:relative;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.03),
+    0 4px 16px rgba(0,0,0,.3),
+    0 20px 60px rgba(0,0,0,.5),
+    0 40px 100px rgba(0,0,0,.4),
+    inset 0 1px 0 rgba(255,255,255,.06);
+}
+.phone-frame::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:120px;height:28px;background:var(--bg);border-radius:0 0 18px 18px;z-index:50;
+  border:1px solid rgba(255,255,255,.04);border-top:none;
+}
+.phone-content{
+  height:852px;overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:none;-ms-overflow-style:none;
+  padding-bottom:80px;
+}
+.phone-content::-webkit-scrollbar{display:none}
+
+/* ── Phone Header ── */
+.phone-header{
+  padding:44px 24px 22px;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#0d2847 0%,#0a3040 30%,#102838 60%,#0f1f30 100%);
+}
+.phone-header::before{
+  content:'';position:absolute;top:-80px;right:-60px;width:260px;height:260px;
+  background:radial-gradient(circle,rgba(0,212,170,.1),rgba(78,168,222,.05) 50%,transparent 70%);
+  pointer-events:none;animation:headerGlow 6s ease-in-out infinite;
+}
+.phone-header::after{
+  content:'';position:absolute;bottom:-40px;left:-40px;width:200px;height:200px;
+  background:radial-gradient(circle,rgba(78,168,222,.06),transparent 70%);
+  pointer-events:none;animation:headerGlow 8s ease-in-out infinite reverse;
+}
+@keyframes headerGlow{
+  0%,100%{transform:translate(0,0) scale(1);opacity:1}
+  50%{transform:translate(10px,-10px) scale(1.1);opacity:.7}
+}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:2}
+.greeting{font-size:.82rem;color:var(--text-dim);margin-bottom:3px;font-weight:400}
+.greeting-name{font-size:1.35rem;font-weight:700;letter-spacing:-.01em}
+.location{
+  display:flex;align-items:center;gap:4px;margin-top:6px;
+  font-size:.7rem;color:var(--text-muted);font-weight:400;
+}
+.header-date{
+  font-size:.65rem;color:var(--text-muted);text-align:right;
+  line-height:1.5;padding-top:4px;
+}
+
+/* ── Index Ring ── */
+.index-section{
+  display:flex;flex-direction:column;align-items:center;
+  padding:28px 0 22px;
+  background:linear-gradient(180deg,#0a3040 0%,var(--bg) 100%);
+}
+.index-ring{position:relative;width:210px;height:210px}
+.index-ring svg{width:210px;height:210px;transform:rotate(-90deg)}
+.index-ring circle{fill:none;stroke-width:10;stroke-linecap:round}
+.ring-bg{stroke:rgba(255,255,255,.05)}
+.ring-track{stroke:rgba(255,255,255,.02);stroke-width:12}
+.ring-fill{
+  stroke:url(#ringGrad);stroke-dasharray:502;stroke-dashoffset:502;
+  transition:stroke-dashoffset 2s cubic-bezier(.4,0,.2,1);
+  filter:drop-shadow(0 0 8px rgba(0,212,170,.25));
+}
+.ring-fill.animate{stroke-dashoffset:140}
+.index-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.index-label{
+  font-size:.6rem;font-weight:600;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:1.5px;
+}
+.index-score{
+  font-size:3.4rem;font-weight:800;line-height:1;margin:4px 0 2px;
+  background:linear-gradient(135deg,var(--teal),var(--amber));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.index-score span{font-size:1.1rem;-webkit-text-fill-color:var(--text-muted);font-weight:500}
+.index-subtitle{font-size:.68rem;color:var(--text-dim);font-weight:400}
+.outlook{margin-top:14px;font-size:.85rem;font-weight:500;text-align:center}
+.outlook .status{color:var(--amber);font-weight:600}
+.trend{
+  display:inline-flex;align-items:center;gap:4px;margin-top:6px;
+  font-size:.7rem;color:var(--coral);font-weight:500;
+  background:rgba(255,107,107,.08);padding:3px 10px;border-radius:20px;
+}
+
+/* ── Section Titles ── */
+.section-title{
+  font-size:.68rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.9px;color:var(--text-dim);padding:0 24px;margin:22px 0 12px;
+}
+
+/* ── Nudge Cards ── */
+.nudges{
+  display:flex;gap:12px;padding:0 24px;overflow-x:auto;
+  scrollbar-width:none;-ms-overflow-style:none;
+  scroll-snap-type:x mandatory;
+}
+.nudges::-webkit-scrollbar{display:none}
+.nudge-card{
+  flex:0 0 160px;background:var(--card);
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px;transition:all .3s cubic-bezier(.4,0,.2,1);
+  scroll-snap-align:start;cursor:default;
+}
+.nudge-card:hover{
+  border-color:var(--border-glow);transform:translateY(-3px);
+  background:var(--card-hover);
+  box-shadow:0 8px 24px rgba(0,0,0,.2),0 0 0 1px rgba(0,212,170,.06);
+}
+.nudge-icon{
+  width:40px;height:40px;border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.15rem;margin-bottom:12px;
+}
+.nudge-icon.water{background:rgba(78,168,222,.12)}
+.nudge-icon.lung{background:rgba(255,179,71,.12)}
+.nudge-icon.pill{background:rgba(167,139,250,.12)}
+.nudge-icon.air{background:rgba(255,107,107,.12)}
+.nudge-title{font-size:.78rem;font-weight:600;margin-bottom:5px;line-height:1.2}
+.nudge-desc{font-size:.65rem;color:var(--text-dim);line-height:1.5}
+
+/* ── Air Quality Section ── */
+.aqi-section{padding:0 24px;margin-top:4px}
+.aqi-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;
+}
+.aqi-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.aqi-label{font-size:.82rem;font-weight:600}
+.aqi-badge{
+  font-size:.6rem;font-weight:600;padding:3px 10px;border-radius:20px;
+  background:rgba(255,107,107,.1);color:var(--coral);
+}
+.aqi-bar-container{position:relative;margin-bottom:8px}
+.aqi-bar{
+  height:12px;border-radius:6px;overflow:hidden;display:flex;
+  background:rgba(255,255,255,.03);
+}
+.aqi-segment{height:100%;transition:width .5s ease}
+.aqi-marker{
+  position:absolute;top:-4px;width:3px;height:20px;
+  background:var(--text);border-radius:2px;
+  box-shadow:0 0 6px rgba(240,244,248,.4);
+  transition:left .5s ease;
+}
+.aqi-marker::after{
+  content:'Now';position:absolute;top:-16px;left:50%;transform:translateX(-50%);
+  font-size:.5rem;color:var(--text-dim);font-weight:600;white-space:nowrap;
+}
+.aqi-times{display:flex;justify-content:space-between;margin-top:4px}
+.aqi-time{font-size:.55rem;color:var(--text-muted);font-weight:500}
+.aqi-legend{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap}
+.aqi-legend-item{display:flex;align-items:center;gap:4px;font-size:.55rem;color:var(--text-dim)}
+.aqi-legend-dot{width:6px;height:6px;border-radius:50%}
+
+/* ── Forecast ── */
+.forecast{padding:0 24px;margin-top:4px}
+.forecast-bar{display:flex;gap:3px;align-items:flex-end;margin-bottom:14px}
+.forecast-dot{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.dot{
+  width:12px;height:12px;border-radius:50%;transition:all .25s ease;
+  cursor:pointer;box-shadow:0 0 4px rgba(0,0,0,.2);
+}
+.dot:hover{transform:scale(1.6);box-shadow:0 0 10px currentColor}
+.forecast-hour{font-size:.48rem;color:var(--text-muted);font-weight:500}
+.forecast-cards{display:flex;flex-direction:column;gap:8px}
+.forecast-detail-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:14px 16px;
+  display:flex;justify-content:space-between;align-items:center;
+  transition:all .25s ease;
+}
+.forecast-detail-card:hover{
+  border-color:var(--border-glow);background:var(--card-hover);
+}
+.fd-left{display:flex;align-items:center;gap:10px}
+.fd-weather{font-size:1.2rem}
+.fd-day{font-size:.8rem;font-weight:500}
+.fd-sub{font-size:.6rem;color:var(--text-muted);margin-top:1px}
+.fd-right{display:flex;align-items:center;gap:10px}
+.fd-score{font-size:1rem;font-weight:700}
+.fd-status{
+  font-size:.6rem;font-weight:600;padding:4px 10px;border-radius:8px;
+  white-space:nowrap;
+}
+
+/* ── Bottom Nav ── */
+.bottom-nav{
+  position:absolute;bottom:0;left:0;right:0;
+  display:flex;justify-content:space-around;
+  padding:10px 0 28px;
+  background:linear-gradient(180deg,rgba(10,15,30,.85),rgba(10,15,30,.98));
+  backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);z-index:40;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:.58rem;font-weight:500;color:var(--text-muted);
+  cursor:pointer;transition:all .2s ease;padding:4px 12px;
+}
+.nav-item.active{color:var(--teal)}
+.nav-item:hover{color:var(--text-dim)}
+.nav-item .icon{font-size:1.2rem;line-height:1}
+.nav-item.active .icon{filter:drop-shadow(0 0 4px rgba(0,212,170,.3))}
+.nav-dot{
+  width:4px;height:4px;border-radius:50%;background:var(--teal);
+  margin-top:2px;opacity:0;transition:.2s;
+}
+.nav-item.active .nav-dot{opacity:1}
+
+/* ── Back Links ── */
+.back-links{
+  display:flex;justify-content:center;gap:24px;
+  margin-top:28px;padding:0 20px;
+}
+.back-link{
+  font-size:.78rem;color:var(--teal);text-decoration:none;
+  opacity:.6;transition:all .25s ease;font-weight:500;
+  display:flex;align-items:center;gap:4px;
+}
+.back-link:hover{opacity:1;transform:translateX(-2px)}
+.back-link.forward:hover{transform:translateX(2px)}
+
+/* ── Animations ── */
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.nudge-card{animation:fadeInUp .5s ease backwards}
+.nudge-card:nth-child(1){animation-delay:.1s}
+.nudge-card:nth-child(2){animation-delay:.2s}
+.nudge-card:nth-child(3){animation-delay:.3s}
+.nudge-card:nth-child(4){animation-delay:.4s}
+.forecast-detail-card{animation:fadeInUp .4s ease backwards}
+.forecast-detail-card:nth-child(1){animation-delay:.3s}
+.forecast-detail-card:nth-child(2){animation-delay:.4s}
+.forecast-detail-card:nth-child(3){animation-delay:.5s}
+.aqi-card{animation:fadeInUp .5s ease .2s backwards}
+
+@keyframes pulse{
+  0%,100%{opacity:1}
+  50%{opacity:.5}
+}
+</style>
+</head>
+<body>
+
+<div style="display:flex;flex-direction:column;align-items:center">
+<div class="phone-frame">
+  <div class="phone-content">
+
+  <!-- Header -->
+  <div class="phone-header">
+    <div class="header-top">
+      <div>
+        <div class="greeting">Good Morning,</div>
+        <div class="greeting-name">Maria Garcia 👋</div>
+        <div class="location">📍 Dallas, TX 75201</div>
+      </div>
+      <div class="header-date">
+        Wed, May 28<br>8:42 AM
+      </div>
+    </div>
+  </div>
+
+  <!-- Index Ring -->
+  <div class="index-section">
+    <div class="index-ring">
+      <svg viewBox="0 0 210 210">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00d4aa"/>
+            <stop offset="55%" stop-color="#f1c40f"/>
+            <stop offset="100%" stop-color="#ffb347"/>
+          </linearGradient>
+          <linearGradient id="ringGradBg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="rgba(0,212,170,.06)"/>
+            <stop offset="100%" stop-color="rgba(255,179,71,.04)"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-track" cx="105" cy="105" r="80"/>
+        <circle class="ring-bg" cx="105" cy="105" r="80"/>
+        <circle class="ring-fill" cx="105" cy="105" r="80"/>
+      </svg>
+      <div class="index-center">
+        <div class="index-label">ClimaHealth Index</div>
+        <div class="index-score">72<span>/100</span></div>
+        <div class="index-subtitle">Your Personal Score</div>
+      </div>
+    </div>
+    <div class="outlook">Today's Outlook: <span class="status">⛅ Moderate — Take Precautions</span></div>
+    <div class="trend">↓ 6 from yesterday</div>
+  </div>
+
+  <!-- Nudge Cards -->
+  <div class="section-title">Daily Behavioral Nudges</div>
+  <div class="nudges">
+    <div class="nudge-card">
+      <div class="nudge-icon water">💧</div>
+      <div class="nudge-title">Hydrate More</div>
+      <div class="nudge-desc">Heat index reaching 103°F. Increase water intake to 10+ glasses today.</div>
+    </div>
+    <div class="nudge-card">
+      <div class="nudge-icon lung">🫁</div>
+      <div class="nudge-title">Stay Indoors After 2 PM</div>
+      <div class="nudge-desc">Ozone levels peak in afternoon. Exercise indoors or early morning.</div>
+    </div>
+    <div class="nudge-card">
+      <div class="nudge-icon pill">💊</div>
+      <div class="nudge-title">Medication Reminder</div>
+      <div class="nudge-desc">Barometric pressure dropping tonight. Take evening medications by 6 PM.</div>
+    </div>
+    <div class="nudge-card">
+      <div class="nudge-icon air">🏠</div>
+      <div class="nudge-title">Air Quality Alert</div>
+      <div class="nudge-desc">AQI at 207. Keep windows closed and run air purifier if available.</div>
+    </div>
+  </div>
+
+  <!-- Air Quality Forecast -->
+  <div class="section-title">Air Quality Forecast</div>
+  <div class="aqi-section">
+    <div class="aqi-card">
+      <div class="aqi-header">
+        <div class="aqi-label">24-Hour AQI Levels</div>
+        <div class="aqi-badge">⚠ Unhealthy</div>
+      </div>
+      <div class="aqi-bar-container">
+        <div class="aqi-bar" id="aqiBar"></div>
+        <div class="aqi-marker" id="aqiMarker" style="left:35%"></div>
+      </div>
+      <div class="aqi-times">
+        <span class="aqi-time">6 AM</span>
+        <span class="aqi-time">12 PM</span>
+        <span class="aqi-time">6 PM</span>
+        <span class="aqi-time">12 AM</span>
+      </div>
+      <div class="aqi-legend">
+        <div class="aqi-legend-item"><div class="aqi-legend-dot" style="background:#4ade80"></div>Good</div>
+        <div class="aqi-legend-item"><div class="aqi-legend-dot" style="background:#facc15"></div>Moderate</div>
+        <div class="aqi-legend-item"><div class="aqi-legend-dot" style="background:#fb923c"></div>Unhealthy-SG</div>
+        <div class="aqi-legend-item"><div class="aqi-legend-dot" style="background:#ef4444"></div>Unhealthy</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 48-Hour Forecast -->
+  <div class="section-title">48-Hour Health Forecast</div>
+  <div class="forecast">
+    <div class="forecast-bar" id="forecastBar"></div>
+    <div class="forecast-cards">
+      <div class="forecast-detail-card">
+        <div class="fd-left">
+          <div class="fd-weather">⛅</div>
+          <div>
+            <div class="fd-day">Today</div>
+            <div class="fd-sub">Partly Cloudy · 98°F</div>
+          </div>
+        </div>
+        <div class="fd-right">
+          <div class="fd-score" style="color:var(--amber)">72</div>
+          <div class="fd-status" style="background:rgba(255,179,71,.1);color:var(--amber)">Moderate</div>
+        </div>
+      </div>
+      <div class="forecast-detail-card">
+        <div class="fd-left">
+          <div class="fd-weather">🌩️</div>
+          <div>
+            <div class="fd-day">Tomorrow</div>
+            <div class="fd-sub">Thunderstorms · 94°F</div>
+          </div>
+        </div>
+        <div class="fd-right">
+          <div class="fd-score" style="color:var(--coral)">58</div>
+          <div class="fd-status" style="background:rgba(255,107,107,.1);color:var(--coral)">Elevated</div>
+        </div>
+      </div>
+      <div class="forecast-detail-card">
+        <div class="fd-left">
+          <div class="fd-weather">☀️</div>
+          <div>
+            <div class="fd-day">Thursday</div>
+            <div class="fd-sub">Sunny · 92°F</div>
+          </div>
+        </div>
+        <div class="fd-right">
+          <div class="fd-score" style="color:var(--teal)">81</div>
+          <div class="fd-status" style="background:rgba(0,212,170,.1);color:var(--teal)">Good</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:24px"></div>
+
+  </div><!-- end phone-content -->
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <div class="nav-item active"><span class="icon">🏠</span>Home<div class="nav-dot"></div></div>
+    <div class="nav-item"><span class="icon">📊</span>Forecast<div class="nav-dot"></div></div>
+    <div class="nav-item"><span class="icon">💬</span>Messages<div class="nav-dot"></div></div>
+    <div class="nav-item"><span class="icon">👤</span>Profile<div class="nav-dot"></div></div>
+  </div>
+</div>
+
+<div class="back-links">
+  <a href="dashboard.html" class="back-link">← Provider Dashboard</a>
+  <a href="plan.html" class="back-link forward">View Plan →</a>
+</div>
+</div>
+
+<script>
+// ── Generate forecast dots ──
+const bar = document.getElementById('forecastBar');
+const scores = [
+  76,74,73,72,71,70,68,66,64,62,60,58,
+  56,55,54,56,58,60,63,66,70,74,78,80,
+  82,83,84,83,82,80,78,77,76,74,72,70,
+  68,66,65,64,66,68,72,76,80,82,84,85
+];
+const hours = [
+  'Now','','','3h','','','6h','','','9h','','','12h','','','15h','','','18h','','','21h','','','24h',
+  '','','27h','','','30h','','','33h','','','36h','','','39h','','','42h','','','45h','','','48h'
+];
+
+scores.forEach((s, i) => {
+  const color = s >= 80 ? '#00d4aa' : s >= 70 ? '#f1c40f' : s >= 60 ? '#ffb347' : '#ff6b6b';
+  const d = document.createElement('div');
+  d.className = 'forecast-dot';
+  d.innerHTML = `<div class="dot" style="background:${color};box-shadow:0 0 4px ${color}40" title="Score: ${s}"></div><div class="forecast-hour">${hours[i] || ''}</div>`;
+  bar.appendChild(d);
+});
+
+// ── Animate ring on load ──
+setTimeout(() => {
+  document.querySelector('.ring-fill').classList.add('animate');
+}, 400);
+
+// ── Build AQI bar ──
+const aqiBar = document.getElementById('aqiBar');
+// Simulated 24h AQI progression: morning good → midday moderate → afternoon unhealthy → evening recovery
+const aqiSegments = [
+  { width: '12%', color: '#4ade80' },  // 6-9AM Good
+  { width: '10%', color: '#a3e635' },  // 9-11AM Good-Mod transition
+  { width: '12%', color: '#facc15' },  // 11AM-1PM Moderate
+  { width: '14%', color: '#fb923c' },  // 1-4PM USG
+  { width: '18%', color: '#ef4444' },  // 4-8PM Unhealthy (peak)
+  { width: '14%', color: '#fb923c' },  // 8-10PM USG recovery
+  { width: '10%', color: '#facc15' },  // 10PM-12AM Moderate
+  { width: '10%', color: '#a3e635' },  // 12AM-2AM easing
+];
+
+aqiSegments.forEach(seg => {
+  const s = document.createElement('div');
+  s.className = 'aqi-segment';
+  s.style.width = seg.width;
+  s.style.background = seg.color;
+  aqiBar.appendChild(s);
+});
+
+// Position marker at current time (~8:42 AM → roughly 15% through 6AM-6AM range)
+document.getElementById('aqiMarker').style.left = '15%';
+
+// ── Subtle hover sound placeholder ──
+document.querySelectorAll('.nudge-card').forEach(card => {
+  card.addEventListener('mouseenter', () => {
+    card.style.transform = 'translateY(-3px)';
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+  });
+});
+</script>
+</body>
+</html>

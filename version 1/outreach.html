@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outreach — ClimaHealth</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0f1e;
+  --surface: #111827;
+  --card: #1a2235;
+  --card-hover: #1f2a42;
+  --border: rgba(255,255,255,.06);
+  --border-glow: rgba(0,212,170,.15);
+  --teal: #00d4aa;
+  --teal-dim: rgba(0,212,170,.15);
+  --coral: #ff6b6b;
+  --amber: #ffb347;
+  --blue: #4ea8de;
+  --purple: #a78bfa;
+  --text: #f0f4f8;
+  --text-dim: #8892a4;
+  --text-muted: #5a6478;
+  --radius: 14px;
+  --radius-sm: 10px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Topbar ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 64px;
+  background: rgba(17,24,39,.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.logo svg { width: 32px; height: 32px; }
+.accent { color: var(--teal); }
+.nav { display: flex; gap: 8px; }
+.nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: .875rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  transition: all .2s;
+}
+.nav a:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.nav a.active {
+  color: var(--teal);
+  background: var(--teal-dim);
+}
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.notif {
+  position: relative;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform .2s;
+}
+.notif:hover { transform: scale(1.15); }
+.badge-dot {
+  position: absolute;
+  top: -2px; right: -2px;
+  width: 8px; height: 8px;
+  background: var(--coral);
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+}
+.avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: box-shadow .2s;
+}
+.avatar:hover { box-shadow: 0 0 0 3px var(--teal-dim); }
+
+/* ── Main ── */
+.main-content {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+/* ── Page Header ── */
+.page-header {
+  margin-bottom: 28px;
+}
+.page-header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  background: linear-gradient(135deg, var(--text) 0%, var(--text-dim) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.page-header p {
+  color: var(--text-dim);
+  font-size: .925rem;
+  margin-top: 4px;
+}
+
+/* ── Stepper ── */
+.stepper-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 40px;
+  margin-bottom: 28px;
+  overflow-x: auto;
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  min-width: 700px;
+}
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  min-width: 140px;
+}
+.step-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  transition: all .3s;
+  position: relative;
+}
+.step.completed .step-icon {
+  background: var(--teal-dim);
+  border-color: var(--teal);
+  box-shadow: 0 0 20px rgba(0,212,170,.15);
+}
+.step.active .step-icon {
+  background: var(--teal-dim);
+  border-color: var(--teal);
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+.step.pending .step-icon {
+  background: var(--surface);
+  border-color: var(--border);
+  opacity: .5;
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 10px rgba(0,212,170,.2), 0 0 30px rgba(0,212,170,.1); }
+  50% { box-shadow: 0 0 20px rgba(0,212,170,.4), 0 0 50px rgba(0,212,170,.2); }
+}
+.step-label {
+  font-size: .8rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.step.completed .step-label { color: var(--teal); }
+.step.active .step-label { color: var(--teal); }
+.step.pending .step-label { color: var(--text-muted); }
+.step-time {
+  font-size: .7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.step.active .step-time {
+  color: var(--teal);
+  font-weight: 700;
+  animation: pulseText 2s ease-in-out infinite;
+}
+@keyframes pulseText {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+.step-connector {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  position: relative;
+  z-index: 1;
+  margin: 0 -10px;
+  margin-bottom: 28px;
+}
+.step-connector.completed {
+  background: linear-gradient(90deg, var(--teal), var(--teal));
+  box-shadow: 0 0 8px rgba(0,212,170,.2);
+}
+.step-connector.half {
+  background: linear-gradient(90deg, var(--teal) 50%, var(--border) 50%);
+}
+
+/* ── Two Column Layout ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+@media (max-width: 1024px) {
+  .two-col { grid-template-columns: 1fr; }
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition: border-color .3s;
+}
+.card:hover { border-color: var(--border-glow); }
+.card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card + .card { margin-top: 24px; }
+
+/* ── Campaign Details ── */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.detail-item {
+  padding: 14px 16px;
+  background: rgba(255,255,255,.02);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+.detail-label {
+  font-size: .7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.detail-value {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.detail-value .tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: .75rem;
+  font-weight: 700;
+}
+.tag-critical {
+  background: rgba(255,107,107,.12);
+  color: var(--coral);
+  border: 1px solid rgba(255,107,107,.2);
+}
+.tag-sms {
+  background: rgba(78,168,222,.12);
+  color: var(--blue);
+  border: 1px solid rgba(78,168,222,.2);
+}
+.tag-track-a {
+  background: var(--teal-dim);
+  color: var(--teal);
+  border: 1px solid rgba(0,212,170,.2);
+}
+
+/* ── Phone Mockup ── */
+.phone-mockup {
+  background: #0d1117;
+  border-radius: 28px;
+  padding: 16px;
+  max-width: 380px;
+  margin: 0 auto 20px;
+  border: 2px solid rgba(255,255,255,.08);
+  box-shadow: 0 20px 60px rgba(0,0,0,.4);
+  position: relative;
+}
+.phone-notch {
+  width: 100px;
+  height: 6px;
+  background: rgba(255,255,255,.08);
+  border-radius: 3px;
+  margin: 0 auto 12px;
+}
+.phone-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+.phone-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), var(--blue));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .65rem;
+  font-weight: 700;
+}
+.phone-sender {
+  font-size: .8rem;
+  font-weight: 600;
+}
+.phone-sender-sub {
+  font-size: .65rem;
+  color: var(--text-muted);
+}
+.sms-bubble {
+  background: #1c2a3e;
+  border-radius: 18px 18px 18px 4px;
+  padding: 16px 18px;
+  font-size: .82rem;
+  line-height: 1.65;
+  color: var(--text);
+  margin: 0 4px;
+  position: relative;
+}
+.sms-bubble ul {
+  margin: 8px 0;
+  padding-left: 4px;
+  list-style: none;
+}
+.sms-bubble ul li {
+  padding: 2px 0;
+}
+.sms-bubble ul li::before {
+  content: "•";
+  margin-right: 8px;
+  color: var(--teal);
+}
+.sms-time {
+  text-align: right;
+  font-size: .65rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  padding-right: 8px;
+}
+
+/* ── Language Selector ── */
+.lang-selector {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: center;
+}
+.lang-btn {
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: 'Inter', sans-serif;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .25s;
+}
+.lang-btn:hover {
+  border-color: rgba(255,255,255,.12);
+  color: var(--text);
+  background: rgba(255,255,255,.03);
+}
+.lang-btn.active {
+  border-color: var(--teal);
+  background: var(--teal-dim);
+  color: var(--teal);
+}
+
+/* ── Approval Controls ── */
+.schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.schedule-label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.schedule-select {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: .85rem;
+  font-weight: 500;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='%238892a4'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color .2s;
+}
+.schedule-select:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+.approve-btn {
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: linear-gradient(135deg, var(--teal), #00b894);
+  color: #0a0f1e;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.approve-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px rgba(0,212,170,.3);
+}
+.approve-btn:active {
+  transform: translateY(0);
+}
+.approve-btn.approved {
+  background: linear-gradient(135deg, #10b981, #059669);
+  pointer-events: none;
+  animation: approvedPop .4s ease-out;
+}
+@keyframes approvedPop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.04); }
+  60% { transform: scale(.98); }
+  100% { transform: scale(1); }
+}
+.approve-btn .checkmark-anim {
+  display: none;
+}
+.approve-btn.approved .checkmark-anim {
+  display: inline-block;
+  animation: checkPop .4s ease-out;
+}
+@keyframes checkPop {
+  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+  60% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.fhir-info {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: rgba(78,168,222,.06);
+  border: 1px solid rgba(78,168,222,.12);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: .8rem;
+  color: var(--blue);
+  line-height: 1.5;
+}
+.fhir-info .info-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Metrics ── */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.metric-box {
+  padding: 18px 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.02);
+  border: 1px solid var(--border);
+  text-align: center;
+  transition: all .25s;
+}
+.metric-box:hover {
+  border-color: var(--border-glow);
+  background: rgba(255,255,255,.035);
+}
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  margin-bottom: 4px;
+}
+.metric-label {
+  font-size: .7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+}
+.mv-teal { color: var(--teal); }
+.mv-blue { color: var(--blue); }
+.mv-green { color: #10b981; }
+.mv-amber { color: var(--amber); }
+
+/* ── History Table ── */
+.history-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition: border-color .3s;
+}
+.history-card:hover { border-color: var(--border-glow); }
+.table-wrap {
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+thead th {
+  text-align: left;
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text-muted);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+tbody td {
+  padding: 14px 16px;
+  font-size: .85rem;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  transition: background .2s;
+}
+tbody tr:hover td {
+  background: rgba(255,255,255,.02);
+}
+tbody tr:last-child td {
+  border-bottom: none;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: .75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.status-pending {
+  background: rgba(255,179,71,.1);
+  color: var(--amber);
+  border: 1px solid rgba(255,179,71,.2);
+}
+.status-delivered {
+  background: rgba(16,185,129,.1);
+  color: #10b981;
+  border: 1px solid rgba(16,185,129,.2);
+}
+.status-completed {
+  background: rgba(167,139,250,.1);
+  color: var(--purple);
+  border: 1px solid rgba(167,139,250,.2);
+}
+.fhir-link {
+  color: var(--blue);
+  font-family: 'Inter', monospace;
+  font-size: .78rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 3px 8px;
+  background: rgba(78,168,222,.08);
+  border-radius: 6px;
+  transition: all .2s;
+}
+.fhir-link:hover {
+  background: rgba(78,168,222,.15);
+}
+
+/* ── Responsiveness ── */
+@media (max-width: 768px) {
+  .topbar { padding: 0 16px; }
+  .nav { display: none; }
+  .main-content { padding: 20px 16px; }
+  .stepper-card { padding: 20px; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .metrics-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.14); }
+
+/* ── Animations ── */
+.fade-in-up {
+  animation: fadeInUp .5s ease-out both;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.delay-1 { animation-delay: .1s; }
+.delay-2 { animation-delay: .2s; }
+.delay-3 { animation-delay: .3s; }
+.delay-4 { animation-delay: .4s; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" stroke="url(#g)" stroke-width="2.5"/><path d="M16 8v8l6 4" stroke="url(#g)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="g" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#00d4aa"/><stop offset="1" stop-color="#4ea8de"/></linearGradient></defs></svg>
+    Clima<span class="accent">Health</span>
+  </div>
+  <nav class="nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="patient-detail.html">Patients</a>
+    <a href="outreach.html" class="active">Campaigns</a>
+    <a href="consumer.html">Consumer App</a>
+    <a href="analytics.html">Analytics</a>
+    <a href="plan.html">Plan</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="notif">🔔<span class="badge-dot"></span></div>
+    <div class="avatar">DR</div>
+  </div>
+</header>
+
+<main class="main-content">
+
+  <!-- Page Header -->
+  <div class="page-header fade-in-up">
+    <h1>48-Hour Approve & Release</h1>
+    <p>Review AI-generated outreach campaigns and approve for delivery to consented patients.</p>
+  </div>
+
+  <!-- Intervention Flow Stepper -->
+  <div class="stepper-card fade-in-up delay-1">
+    <div class="stepper">
+      <div class="step completed">
+        <div class="step-icon">⚡</div>
+        <div class="step-label">Patient Flagged</div>
+        <div class="step-time">14:23 CDT</div>
+      </div>
+      <div class="step-connector completed"></div>
+      <div class="step completed">
+        <div class="step-icon">🤖</div>
+        <div class="step-label">AI Outreach Generated</div>
+        <div class="step-time">14:24 CDT</div>
+      </div>
+      <div class="step-connector half"></div>
+      <div class="step active">
+        <div class="step-icon">👨‍⚕️</div>
+        <div class="step-label">Provider Review</div>
+        <div class="step-time">NOW</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step pending">
+        <div class="step-icon">📨</div>
+        <div class="step-label">Message Scheduled</div>
+        <div class="step-time">—</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step pending">
+        <div class="step-icon">📋</div>
+        <div class="step-label">Logged in EHR</div>
+        <div class="step-time">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two Column Layout -->
+  <div class="two-col">
+
+    <!-- Left Column -->
+    <div class="left-col">
+
+      <!-- Campaign Details Card -->
+      <div class="card fade-in-up delay-2">
+        <div class="card-title">📢 Campaign Details</div>
+        <div class="detail-grid">
+          <div class="detail-item full-width">
+            <div class="detail-label">Campaign Name</div>
+            <div class="detail-value">Heat Advisory — Respiratory Panel</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Generated By</div>
+            <div class="detail-value">MindStudio AI Worker Agent</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Trigger Condition</div>
+            <div class="detail-value">AQI forecast &gt;150 + Heat Index &gt;100°F</div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Target Population</div>
+            <div class="detail-value">847 patients <span class="tag tag-track-a">Track A — Fully Consented</span></div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Channel</div>
+            <div class="detail-value"><span class="tag tag-sms">SMS</span></div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Priority</div>
+            <div class="detail-value"><span class="tag tag-critical">Critical</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Preview Card -->
+      <div class="card fade-in-up delay-3">
+        <div class="card-title">💬 Message Preview</div>
+
+        <div class="phone-mockup">
+          <div class="phone-notch"></div>
+          <div class="phone-header">
+            <div class="phone-avatar">CH</div>
+            <div>
+              <div class="phone-sender">ClimaHealth</div>
+              <div class="phone-sender-sub">SMS • Now</div>
+            </div>
+          </div>
+          <div class="sms-bubble" id="sms-bubble">
+            <span id="sms-text">Air quality in the Dallas metro area is expected to worsen over the next 48 hours due to elevated ozone and particulate levels. If you have a respiratory condition, we recommend:<ul><li>Limit outdoor activity, especially between 2–6 PM</li><li>Keep rescue inhaler accessible</li><li>Run air conditioning / air purifier indoors</li><li>Contact your care team if symptoms worsen</li></ul>Stay safe. — Your ClimaHealth Care Team</span>
+          </div>
+          <div class="sms-time">Today, 2:24 PM CDT</div>
+        </div>
+
+        <div class="lang-selector">
+          <button class="lang-btn active" onclick="setLang('en', this)">English</button>
+          <button class="lang-btn" onclick="setLang('es', this)">Español</button>
+          <button class="lang-btn" onclick="setLang('vi', this)">Tiếng Việt</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column -->
+    <div class="right-col">
+
+      <!-- Approval Controls Card -->
+      <div class="card fade-in-up delay-2">
+        <div class="card-title">🔐 Approval Controls</div>
+
+        <div class="schedule-row">
+          <div class="schedule-label">Schedule:</div>
+          <select class="schedule-select" id="schedule-select">
+            <option value="immediate">Immediate</option>
+            <option value="30min">In 30 minutes</option>
+            <option value="1hr">In 1 hour</option>
+            <option value="2hr">In 2 hours</option>
+            <option value="tomorrow-8am">Tomorrow at 8:00 AM</option>
+            <option value="custom">Custom date/time…</option>
+          </select>
+        </div>
+
+        <button class="approve-btn" id="approve-btn" onclick="approveCampaign()">
+          <span id="btn-text">✓ Approve & Schedule Campaign</span>
+          <span class="checkmark-anim" id="checkmark-anim">✓</span>
+        </button>
+
+        <div class="fhir-info">
+          <span class="info-icon">ℹ️</span>
+          <span>FHIR Progress Note will be automatically documented for all <strong>847 patients</strong> upon delivery confirmation.</span>
+        </div>
+      </div>
+
+      <!-- Campaign Metrics Card -->
+      <div class="card fade-in-up delay-3">
+        <div class="card-title">📊 Campaign Metrics — Today</div>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-value mv-teal">4</div>
+            <div class="metric-label">Total Campaigns</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value mv-blue">1,776</div>
+            <div class="metric-label">Messages Queued</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value mv-green">98.2%</div>
+            <div class="metric-label">Delivery Rate</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value mv-amber">1.4%</div>
+            <div class="metric-label">Opt-out Rate</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Outreach History Table -->
+  <div class="history-card fade-in-up delay-4">
+    <div class="card-title">📋 Outreach History Log</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Campaign</th>
+            <th>Patients</th>
+            <th>Channel</th>
+            <th>Status</th>
+            <th>FHIR Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>May 28, 2026</td>
+            <td style="color:var(--text); font-weight:600;">Heat Advisory — Respiratory</td>
+            <td>847</td>
+            <td>SMS</td>
+            <td><span class="status-badge status-pending">⏳ Pending Approval</span></td>
+            <td style="color:var(--text-muted);">—</td>
+          </tr>
+          <tr>
+            <td>May 27, 2026</td>
+            <td style="color:var(--text); font-weight:600;">Ozone Alert — Full Cohort</td>
+            <td>312</td>
+            <td>SMS</td>
+            <td><span class="status-badge status-delivered">✅ Delivered</span></td>
+            <td><a class="fhir-link" href="#">FN-20260527-001</a></td>
+          </tr>
+          <tr>
+            <td>May 26, 2026</td>
+            <td style="color:var(--text); font-weight:600;">AQI Spike — COPD Exacerbation Alert</td>
+            <td>523</td>
+            <td>SMS + IVR</td>
+            <td><span class="status-badge status-delivered">✅ Delivered</span></td>
+            <td><a class="fhir-link" href="#">FN-20260526-001</a></td>
+          </tr>
+          <tr>
+            <td>May 25, 2026</td>
+            <td style="color:var(--text); font-weight:600;">Manual Outreach — Non-Consented</td>
+            <td>94</td>
+            <td>Phone Call</td>
+            <td><span class="status-badge status-completed">✅ Completed</span></td>
+            <td><a class="fhir-link" href="#">FN-20260525-001</a></td>
+          </tr>
+          <tr>
+            <td>May 24, 2026</td>
+            <td style="color:var(--text); font-weight:600;">AQI Escalation — Emergency</td>
+            <td>1,203</td>
+            <td>SMS</td>
+            <td><span class="status-badge status-delivered">✅ Delivered</span></td>
+            <td><a class="fhir-link" href="#">FN-20260524-001</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Message Translations ──
+const messages = {
+  en: `Air quality in the Dallas metro area is expected to worsen over the next 48 hours due to elevated ozone and particulate levels. If you have a respiratory condition, we recommend:<ul><li>Limit outdoor activity, especially between 2–6 PM</li><li>Keep rescue inhaler accessible</li><li>Run air conditioning / air purifier indoors</li><li>Contact your care team if symptoms worsen</li></ul>Stay safe. — Your ClimaHealth Care Team`,
+
+  es: `Se espera que la calidad del aire en el área metropolitana de Dallas empeore durante las próximas 48 horas debido a niveles elevados de ozono y partículas. Si tiene una condición respiratoria, le recomendamos:<ul><li>Limite la actividad al aire libre, especialmente entre las 2–6 PM</li><li>Mantenga su inhalador de rescate accesible</li><li>Use el aire acondicionado / purificador de aire en interiores</li><li>Comuníquese con su equipo de atención si los síntomas empeoran</li></ul>Manténgase seguro. — Su equipo de atención de ClimaHealth`,
+
+  vi: `Chất lượng không khí ở khu vực đô thị Dallas dự kiến sẽ xấu đi trong 48 giờ tới do mức ozone và hạt bụi tăng cao. Nếu bạn có tình trạng hô hấp, chúng tôi khuyên bạn:<ul><li>Hạn chế hoạt động ngoài trời, đặc biệt từ 2–6 giờ chiều</li><li>Giữ ống hít cứu hộ trong tầm tay</li><li>Bật điều hòa / máy lọc không khí trong nhà</li><li>Liên hệ đội ngũ chăm sóc nếu triệu chứng nặng hơn</li></ul>Giữ an toàn. — Đội ngũ chăm sóc ClimaHealth của bạn`
+};
+
+function setLang(lang, btn) {
+  // Update button states
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // Update SMS text with fade animation
+  const smsText = document.getElementById('sms-text');
+  const bubble = document.getElementById('sms-bubble');
+  bubble.style.opacity = '0';
+  bubble.style.transform = 'translateY(6px)';
+  bubble.style.transition = 'all .25s ease';
+
+  setTimeout(() => {
+    smsText.innerHTML = messages[lang];
+    bubble.style.opacity = '1';
+    bubble.style.transform = 'translateY(0)';
+  }, 250);
+}
+
+// ── Approve Campaign ──
+let approved = false;
+function approveCampaign() {
+  if (approved) return;
+  approved = true;
+
+  const btn = document.getElementById('approve-btn');
+  const btnText = document.getElementById('btn-text');
+
+  btn.classList.add('approved');
+  btnText.textContent = '✓ Campaign Approved — 847 Messages Queued';
+
+  // Update stepper — mark step 4 as completed and step 5 as active
+  const steps = document.querySelectorAll('.step');
+  const connectors = document.querySelectorAll('.step-connector');
+
+  // Step 3 (Provider Review) → completed
+  steps[2].classList.remove('active');
+  steps[2].classList.add('completed');
+  steps[2].querySelector('.step-time').textContent = 'Done';
+
+  // Connector between 3 and 4 → completed
+  connectors[2].classList.remove('');
+  connectors[2].classList.add('completed');
+
+  // Step 4 (Message Scheduled) → completed
+  steps[3].classList.remove('pending');
+  steps[3].classList.add('completed');
+  steps[3].querySelector('.step-time').textContent = 'Queued';
+
+  // Connector between 4 and 5 → half
+  connectors[3].classList.add('half');
+
+  // Step 5 (Logged in EHR) → active
+  steps[4].classList.remove('pending');
+  steps[4].classList.add('active');
+  steps[4].querySelector('.step-time').textContent = 'In Progress';
+
+  // Update the history table — first row status
+  const firstRowStatus = document.querySelector('tbody tr:first-child td:nth-child(5)');
+  firstRowStatus.innerHTML = '<span class="status-badge status-delivered">✅ Approved</span>';
+
+  // Update metrics — bump messages queued
+  // (Optional visual feedback already done via stepper)
+}
+</script>
+
+</body>
+</html>

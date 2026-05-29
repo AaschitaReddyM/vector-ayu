@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClimaHealth — Patient Detail: TX-30158</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0f1e;--surface:#111827;--card:#1a2235;--card-hover:#1f2a42;
+  --border:rgba(255,255,255,.06);--border-glow:rgba(0,212,170,.15);
+  --teal:#00d4aa;--teal-dim:rgba(0,212,170,.15);--coral:#ff6b6b;
+  --amber:#ffb347;--blue:#4ea8de;--purple:#a78bfa;
+  --text:#f0f4f8;--text-dim:#8892a4;--text-muted:#5a6478;
+  --radius:14px;--radius-sm:10px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{color:var(--teal);text-decoration:none}
+
+/* ── Topbar ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:62px;background:rgba(17,24,39,.85);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.2rem}
+.logo svg{width:28px;height:28px}
+.logo span.accent{color:var(--teal)}
+.nav{display:flex;gap:6px}
+.nav a{padding:8px 16px;border-radius:8px;font-size:.85rem;font-weight:500;color:var(--text-dim);transition:.2s}
+.nav a:hover,.nav a.active{background:var(--teal-dim);color:var(--teal)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:600}
+.badge-dot{width:8px;height:8px;border-radius:50%;background:var(--coral);position:absolute;top:-2px;right:-2px}
+.notif{position:relative;cursor:pointer;color:var(--text-dim);font-size:1.1rem}
+
+/* ── Main Container ── */
+.main{max-width:1440px;margin:0 auto;padding:24px 32px;display:flex;flex-direction:column;gap:24px}
+
+/* ── Cards ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:.25s}
+.card:hover{border-color:var(--border-glow)}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.card-title{font-size:.95rem;font-weight:600}
+.card-body{padding:18px 22px}
+
+/* ── Patient Header Bar ── */
+.patient-header{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;gap:20px;position:relative;overflow:hidden}
+.patient-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--teal),var(--blue),var(--purple),var(--teal));background-size:200% 100%;animation:gradientSlide 4s linear infinite}
+@keyframes gradientSlide{0%{background-position:0% 0}100%{background-position:200% 0}}
+.ph-left{display:flex;flex-direction:column;gap:6px}
+.ph-left .patient-id{font-size:1.6rem;font-weight:800;color:var(--teal);letter-spacing:-.5px}
+.ph-left .patient-name{font-size:1.05rem;font-weight:600}
+.ph-left .patient-demo{font-size:.82rem;color:var(--text-dim)}
+.ph-center{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ph-center .h3-cell{font-size:.78rem;font-weight:500;color:var(--text-dim);font-family:'Courier New',monospace;background:rgba(255,255,255,.04);padding:4px 12px;border-radius:6px;border:1px solid var(--border)}
+.ph-center .telemetry{font-size:.78rem;color:var(--text-dim);display:flex;align-items:center;gap:6px}
+.ph-center .telemetry .dot-green{width:8px;height:8px;border-radius:50%;background:#00d4aa;display:inline-block;box-shadow:0 0 8px rgba(0,212,170,.5)}
+.ph-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.badge{padding:4px 12px;border-radius:6px;font-size:.72rem;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+.badge-teal{background:var(--teal-dim);color:var(--teal)}
+.badge-coral{background:rgba(255,107,107,.12);color:var(--coral)}
+.badge-amber{background:rgba(255,179,71,.12);color:var(--amber)}
+.badge-blue{background:rgba(78,168,222,.12);color:var(--blue)}
+.badge-purple{background:rgba(167,139,250,.12);color:var(--purple)}
+.head-tag{display:flex;align-items:center;gap:6px;font-size:.85rem;font-weight:600}
+
+/* ── Two Column Grid ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+
+/* ── Clinical Profile ── */
+.clinical-row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)}
+.clinical-row:last-child{border-bottom:none}
+.clinical-label{font-size:.82rem;color:var(--text-dim);font-weight:500}
+.clinical-value{font-size:.85rem;font-weight:600;text-align:right}
+.clinical-value.danger{color:var(--coral)}
+.clinical-value.warn{color:var(--amber)}
+.clinical-value.ok{color:var(--teal)}
+
+/* ── Medication Table ── */
+.med-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.med-table th{text-align:left;padding:10px 12px;font-weight:500;color:var(--text-dim);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.med-table td{padding:12px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.med-table tr{transition:.15s}
+.med-table tbody tr:hover{background:rgba(255,255,255,.02)}
+.adherence-bar{width:72px;height:7px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px}
+.adherence-fill{height:100%;border-radius:4px;transition:.6s ease}
+.adherence-text{font-weight:600;font-size:.78rem}
+
+/* ── Environmental Exposure ── */
+.env-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.env-item{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;transition:.2s}
+.env-item:hover{border-color:var(--border-glow);background:rgba(255,255,255,.03)}
+.env-item .env-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-bottom:4px;font-weight:500}
+.env-item .env-val{font-size:1.2rem;font-weight:700}
+.env-item .env-sub{font-size:.7rem;color:var(--text-dim);margin-top:2px}
+.env-item.red .env-val{color:var(--coral)}
+.env-item.amber .env-val{color:var(--amber)}
+.env-item.green .env-val{color:var(--teal)}
+
+/* ── Effective Exposure Formula ── */
+.formula-box{background:linear-gradient(135deg,rgba(0,212,170,.06),rgba(78,168,222,.06));border:1px solid var(--border-glow);border-radius:var(--radius);padding:20px 24px;margin-top:8px}
+.formula-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.6px;color:var(--teal);font-weight:600;margin-bottom:12px}
+.formula{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:1rem;font-weight:600}
+.formula .num{padding:4px 10px;border-radius:6px;font-weight:700;font-size:1.1rem}
+.formula .num.red{background:rgba(255,107,107,.15);color:var(--coral)}
+.formula .num.teal{background:var(--teal-dim);color:var(--teal)}
+.formula .num.result{background:rgba(255,179,71,.15);color:var(--amber);font-size:1.3rem}
+.formula .op{color:var(--text-muted);font-weight:400}
+.formula-explain{font-size:.75rem;color:var(--text-dim);margin-top:10px;line-height:1.5}
+
+/* ── Data Source Hierarchy ── */
+.data-sources{display:flex;gap:14px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+.data-src{display:flex;align-items:center;gap:6px;font-size:.78rem;font-weight:500;color:var(--text-dim);background:rgba(255,255,255,.03);padding:6px 12px;border-radius:6px;border:1px solid var(--border)}
+.data-src .check{color:var(--teal);font-weight:700}
+
+/* ── SHAP Chart ── */
+.chart-container{position:relative;height:260px}
+
+/* ── 72h Risk Timeline ── */
+.timeline-container{position:relative;height:300px}
+
+/* ── Phone Mockup ── */
+.phone-frame{width:320px;margin:0 auto;background:#111827;border-radius:32px;padding:12px;border:2px solid rgba(255,255,255,.1);box-shadow:0 20px 60px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.05) inset}
+.phone-screen{background:#1a2235;border-radius:22px;padding:24px 18px;min-height:340px;display:flex;flex-direction:column;gap:12px}
+.phone-notch{width:120px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;margin:0 auto 8px}
+.phone-header{display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.phone-header .msg-icon{width:36px;height:36px;border-radius:50%;background:var(--teal-dim);display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.phone-header-text h4{font-size:.82rem;font-weight:600}
+.phone-header-text p{font-size:.68rem;color:var(--text-muted)}
+.phone-msg{background:rgba(0,212,170,.06);border:1px solid rgba(0,212,170,.12);border-radius:14px 14px 14px 4px;padding:14px 16px;font-size:.78rem;line-height:1.6;color:var(--text);letter-spacing:.01em}
+.phone-time{font-size:.65rem;color:var(--text-muted);text-align:right;margin-top:2px}
+.phone-status{display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--teal);margin-top:4px}
+.phone-status .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite}
+
+/* ── Language Toggle ── */
+.lang-toggle{display:flex;gap:0;border-radius:8px;overflow:hidden;border:1px solid var(--border);width:fit-content;margin:0 auto 16px}
+.lang-btn{padding:8px 20px;font-size:.78rem;font-weight:600;background:transparent;color:var(--text-dim);border:none;cursor:pointer;transition:.2s;font-family:'Inter',sans-serif}
+.lang-btn.active{background:var(--teal-dim);color:var(--teal)}
+.lang-btn:hover:not(.active){background:rgba(255,255,255,.03)}
+
+/* ── Outreach Actions ── */
+.outreach-actions{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:20px}
+.btn-approve{padding:14px 36px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,#00d4aa,#00b894);color:#0a0f1e;font-weight:700;font-size:.88rem;cursor:pointer;transition:.25s;letter-spacing:.3px;font-family:'Inter',sans-serif}
+.btn-approve:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,212,170,.3)}
+.fhir-note{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--text-dim);background:rgba(78,168,222,.06);border:1px solid rgba(78,168,222,.12);padding:8px 14px;border-radius:8px}
+.fhir-note svg{width:16px;height:16px;flex-shrink:0}
+
+/* ── Pulse Animation ── */
+@keyframes pulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+.pulse{animation:pulse 2s ease-in-out infinite}
+
+/* ── Shimmer Animation for loading feel ── */
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+/* ── Fade-in Animation ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.card,.patient-header{animation:fadeUp .5s ease both}
+.two-col .card:nth-child(1){animation-delay:.1s}
+.two-col .card:nth-child(2){animation-delay:.2s}
+
+/* ── Risk Score Ring ── */
+.risk-ring-container{display:flex;align-items:center;gap:16px;margin-top:8px}
+.risk-ring{position:relative;width:54px;height:54px}
+.risk-ring svg{transform:rotate(-90deg)}
+.risk-ring .score{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:800;color:var(--coral)}
+
+/* ── Responsive ── */
+@media(max-width:1024px){.two-col{grid-template-columns:1fr}.patient-header{grid-template-columns:1fr;text-align:center}.ph-center{align-items:center}.ph-right{align-items:center}}
+@media(max-width:768px){.main{padding:16px 12px}.env-grid{grid-template-columns:1fr}.phone-frame{width:100%;max-width:320px}}
+@media(max-width:600px){.nav{display:none}}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" stroke="url(#g)" stroke-width="2.5"/><path d="M16 8v8l6 4" stroke="url(#g)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="g" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#00d4aa"/><stop offset="1" stop-color="#4ea8de"/></linearGradient></defs></svg>
+    Clima<span class="accent">Health</span>
+  </div>
+  <nav class="nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="patient-detail.html" class="active">Patients</a>
+    <a href="outreach.html">Campaigns</a>
+    <a href="consumer.html">Consumer App</a>
+    <a href="analytics.html">Analytics</a>
+    <a href="plan.html">Plan</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="notif">🔔<span class="badge-dot"></span></div>
+    <div class="avatar">DR</div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<div class="main">
+
+  <!-- ═══════ 1. Patient Header Bar ═══════ -->
+  <div class="patient-header">
+    <div class="ph-left">
+      <div class="patient-id">TX-30158</div>
+      <div class="patient-name">Eleanor Vance</div>
+      <div class="patient-demo">Age 72 · Female · ZIP 75201 · Dallas, TX</div>
+    </div>
+    <div class="ph-center">
+      <div class="h3-cell">H3 Cell: 872a1072bffffff <span style="color:var(--text-muted);font-family:Inter,sans-serif;font-size:.68rem">(Res 7)</span></div>
+      <div class="telemetry"><span class="dot-green"></span> Full Telemetry Active</div>
+    </div>
+    <div class="ph-right">
+      <span class="badge badge-teal">✓ Consent Track A</span>
+      <div class="head-tag">🫁 <span style="color:var(--blue)">Respiratory</span></div>
+      <div class="risk-ring-container">
+        <div class="risk-ring">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="23" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="4"/>
+            <circle cx="27" cy="27" r="23" fill="none" stroke="var(--coral)" stroke-width="4" stroke-linecap="round" stroke-dasharray="144.51" stroke-dashoffset="8.67"/>
+          </svg>
+          <div class="score">94</div>
+        </div>
+        <div>
+          <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:500">Risk Score</div>
+          <div style="font-size:.72rem;color:var(--coral);font-weight:600">CRITICAL</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ 2. Two-Column Layout ═══════ -->
+  <div class="two-col">
+
+    <!-- ── Left Column ── -->
+    <div style="display:flex;flex-direction:column;gap:24px">
+
+      <!-- Clinical Profile Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🩺 Clinical Profile</span>
+          <span class="badge badge-coral">COPD Stage III</span>
+        </div>
+        <div class="card-body">
+          <div class="clinical-row">
+            <span class="clinical-label">Primary Condition</span>
+            <span class="clinical-value">COPD Stage III (GOLD)</span>
+          </div>
+          <div class="clinical-row">
+            <span class="clinical-label">FEV1</span>
+            <span class="clinical-value danger">38% predicted</span>
+          </div>
+          <div class="clinical-row">
+            <span class="clinical-label">Last Spirometry</span>
+            <span class="clinical-value">2026-04-15</span>
+          </div>
+          <div class="clinical-row">
+            <span class="clinical-label">Comorbidities</span>
+            <span class="clinical-value">Hypertension, Osteoporosis</span>
+          </div>
+          <div class="clinical-row">
+            <span class="clinical-label">Smoking Status</span>
+            <span class="clinical-value warn">Former — 35 pack-years</span>
+          </div>
+          <div class="clinical-row">
+            <span class="clinical-label">Prior Exacerbations (12mo)</span>
+            <span class="clinical-value danger">4</span>
+          </div>
+          <div class="clinical-row">
+            <span class="clinical-label">Prior ER Visits (12mo)</span>
+            <span class="clinical-value danger">2</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medication List Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">💊 Medication List</span>
+          <span style="font-size:.72rem;color:var(--text-muted)">5 active medications</span>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="med-table">
+            <thead>
+              <tr>
+                <th>Medication</th>
+                <th>Type</th>
+                <th>Adherence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:500">Tiotropium <span style="color:var(--text-dim);font-weight:400">(Spiriva)</span></td>
+                <td><span class="badge badge-blue">LAMA</span></td>
+                <td>
+                  <span class="adherence-bar"><span class="adherence-fill" style="width:94%;background:var(--teal)"></span></span>
+                  <span class="adherence-text" style="color:var(--teal)">94% 🟢</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:500">Fluticasone/Vilanterol <span style="color:var(--text-dim);font-weight:400">(Breo Ellipta)</span></td>
+                <td><span class="badge badge-purple">ICS/LABA</span></td>
+                <td>
+                  <span class="adherence-bar"><span class="adherence-fill" style="width:87%;background:var(--teal)"></span></span>
+                  <span class="adherence-text" style="color:var(--teal)">87% 🟢</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:500">Albuterol <span style="color:var(--text-dim);font-weight:400">(ProAir)</span></td>
+                <td><span class="badge badge-amber">Rescue Inhaler</span></td>
+                <td>
+                  <span class="adherence-text" style="color:var(--text-dim)">PRN</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:500">Prednisone 10mg</td>
+                <td><span class="badge badge-coral">Oral Corticosteroid</span></td>
+                <td>
+                  <span class="badge badge-coral" style="font-size:.68rem">Active Burst</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:500">Lisinopril 20mg</td>
+                <td><span class="badge badge-teal">ACE Inhibitor</span></td>
+                <td>
+                  <span class="adherence-bar"><span class="adherence-fill" style="width:91%;background:var(--teal)"></span></span>
+                  <span class="adherence-text" style="color:var(--teal)">91% 🟢</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Right Column ── -->
+    <div style="display:flex;flex-direction:column;gap:24px">
+
+      <!-- Environmental Exposure Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🌍 Environmental Exposure</span>
+          <span style="font-size:.72rem;color:var(--coral);font-weight:600" class="pulse">⚠ HAZARDOUS CONDITIONS</span>
+        </div>
+        <div class="card-body">
+          <div class="env-grid">
+            <div class="env-item red">
+              <div class="env-label">🌬️ Outdoor AQI</div>
+              <div class="env-val">207</div>
+              <div class="env-sub">Unhealthy — Very High</div>
+            </div>
+            <div class="env-item amber">
+              <div class="env-label">🌡️ Temperature</div>
+              <div class="env-val">103°F</div>
+              <div class="env-sub">Extreme Heat Advisory</div>
+            </div>
+            <div class="env-item red">
+              <div class="env-label">☁️ Ozone (O₃)</div>
+              <div class="env-val">0.089 ppm</div>
+              <div class="env-sub">Exceeds EPA 8hr Standard</div>
+            </div>
+            <div class="env-item amber">
+              <div class="env-label">📊 Barometric Pressure</div>
+              <div class="env-val">29.72 inHg</div>
+              <div class="env-sub">↓ Dropping — 1.3 inHg/24hr</div>
+            </div>
+          </div>
+
+          <!-- Shielding & Effective Exposure -->
+          <div class="formula-box">
+            <div class="formula-title">🛡️ Exposure Attenuation Model</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div>
+                <div style="font-size:.78rem;color:var(--text-dim);margin-bottom:2px">Shielding Coefficient</div>
+                <div style="font-size:1.2rem;font-weight:700;color:var(--teal)">0.35 <span style="font-size:.72rem;font-weight:400;color:var(--text-dim)">Indoor — HVAC Active</span></div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:.78rem;color:var(--text-dim);margin-bottom:2px">Effective AQI</div>
+                <div style="font-size:1.5rem;font-weight:800;color:var(--amber)">134.6</div>
+              </div>
+            </div>
+            <div class="formula">
+              <span class="op">Effective AQI =</span>
+              <span class="num red">207</span>
+              <span class="op">×</span>
+              <span class="op">( 1 −</span>
+              <span class="num teal">0.35</span>
+              <span class="op">) =</span>
+              <span class="num result">134.6</span>
+            </div>
+            <div class="formula-explain">
+              Exposure Attenuation reduces the raw outdoor hazard by the patient's current shielding level.
+              Indoor HVAC provides moderate particulate filtering, reducing effective exposure by 35%.
+            </div>
+          </div>
+
+          <!-- Data Source Hierarchy -->
+          <div class="data-sources">
+            <div class="data-src"><span class="check">✓</span> Wearable</div>
+            <div class="data-src"><span class="check">✓</span> EHR</div>
+            <div class="data-src"><span class="check">✓</span> Climate</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHAP Explainability Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🔍 SHAP Feature Attribution</span>
+          <span style="font-size:.72rem;color:var(--text-dim)">Patient-specific explainability</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-container"><canvas id="shapChart"></canvas></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════ 3. Full-Width Section ═══════ -->
+
+  <!-- 72-Hour Risk Timeline Card -->
+  <div class="card" style="animation-delay:.3s">
+    <div class="card-header">
+      <span class="card-title">📈 72-Hour Risk Trajectory</span>
+      <div style="display:flex;align-items:center;gap:16px">
+        <span style="font-size:.72rem;color:var(--text-dim)">Updated every 4 hours</span>
+        <span class="badge badge-coral pulse">LIVE</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="timeline-container"><canvas id="riskTimeline"></canvas></div>
+      <!-- Event legend -->
+      <div style="display:flex;gap:24px;margin-top:14px;justify-content:center;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-dim)">
+          <span style="width:10px;height:10px;border-radius:50%;background:var(--amber);display:inline-block"></span> AQI Advisory Issued
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-dim)">
+          <span style="width:10px;height:10px;border-radius:50%;background:var(--coral);display:inline-block"></span> Heatwave Onset
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-dim)">
+          <span style="width:12px;height:3px;background:var(--teal);display:inline-block;border-radius:2px"></span> Current Time
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-dim)">
+          <span style="width:12px;height:3px;background:rgba(255,107,107,.3);display:inline-block;border-radius:2px"></span> Critical Threshold (85)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Outreach Preview Card -->
+  <div class="card" style="animation-delay:.4s">
+    <div class="card-header">
+      <span class="card-title">📱 AI-Generated Outreach Preview</span>
+      <span style="font-size:.72rem;color:var(--text-dim)">Personalized SMS · Generated by ClimaHealth AI</span>
+    </div>
+    <div class="card-body" style="display:flex;flex-direction:column;align-items:center">
+
+      <!-- Language Toggle -->
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="switchLang('en')">🇺🇸 English</button>
+        <button class="lang-btn" onclick="switchLang('es')">🇪🇸 Español</button>
+      </div>
+
+      <!-- Phone Frame Mockup -->
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-notch"></div>
+          <div class="phone-header">
+            <div class="msg-icon">💬</div>
+            <div class="phone-header-text">
+              <h4>Parkland Health</h4>
+              <p>SMS · ClimaHealth Outreach</p>
+            </div>
+          </div>
+
+          <div id="msg-en" class="phone-msg">
+            Good morning Eleanor. Air quality in your area (Dallas 75201) is forecast to reach unhealthy levels over the next 48 hours. We recommend staying indoors with air conditioning when possible, keeping your rescue inhaler (ProAir) within reach, and contacting your care team if you notice increased shortness of breath or wheezing. Stay well. — Parkland Health Care Team
+          </div>
+
+          <div id="msg-es" class="phone-msg" style="display:none">
+            Buenos días Eleanor. La calidad del aire en su área (Dallas 75201) se pronostica que alcanzará niveles no saludables en las próximas 48 horas. Le recomendamos permanecer en interiores con aire acondicionado, mantener su inhalador de rescate (ProAir) al alcance, y contactar a su equipo de atención si nota mayor dificultad para respirar. Cuídese. — Equipo de Atención de Parkland Health
+          </div>
+
+          <div class="phone-time" id="msg-time">Today, 7:30 AM CDT</div>
+          <div class="phone-status">
+            <span class="dot"></span> AI-generated · Awaiting clinician approval
+          </div>
+        </div>
+      </div>
+
+      <!-- Outreach Actions -->
+      <div class="outreach-actions">
+        <button class="btn-approve" onclick="approveOutreach(this)">⚡ Approve & Send Outreach</button>
+        <div class="fhir-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>FHIR Progress Note will be auto-documented in EHR via SMART on FHIR integration</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Language Toggle ──
+function switchLang(lang) {
+  const enMsg = document.getElementById('msg-en');
+  const esMsg = document.getElementById('msg-es');
+  const btns = document.querySelectorAll('.lang-btn');
+  
+  btns.forEach(b => b.classList.remove('active'));
+  
+  if (lang === 'es') {
+    enMsg.style.display = 'none';
+    esMsg.style.display = 'block';
+    btns[1].classList.add('active');
+  } else {
+    enMsg.style.display = 'block';
+    esMsg.style.display = 'none';
+    btns[0].classList.add('active');
+  }
+}
+
+// ── Approve Outreach ──
+function approveOutreach(btn) {
+  btn.textContent = '✓ Outreach Approved — Sending...';
+  btn.style.background = 'rgba(0,212,170,.15)';
+  btn.style.color = 'var(--teal)';
+  btn.style.border = '1px solid var(--teal)';
+  btn.style.cursor = 'default';
+  
+  const status = document.querySelector('.phone-status');
+  status.innerHTML = '<span class="dot" style="background:var(--teal)"></span> Approved · Scheduled for delivery';
+  
+  setTimeout(() => {
+    btn.textContent = '✓ Outreach Sent Successfully';
+    status.innerHTML = '<span class="dot" style="background:var(--teal)"></span> Delivered · FHIR note documented';
+  }, 2000);
+}
+
+// ── SHAP Explainability Chart ──
+const shapCtx = document.getElementById('shapChart');
+const shapLabels = [
+  'AQI Exposure',
+  'COPD Severity',
+  'Smoking History',
+  'Barometric Drop',
+  'Prior Exacerbations',
+  'Age Factor',
+  'Medication Adherence',
+  'Indoor Shielding'
+];
+const shapValues = [0.31, 0.28, 0.15, 0.12, 0.09, 0.06, -0.08, -0.14];
+
+new Chart(shapCtx, {
+  type: 'bar',
+  data: {
+    labels: shapLabels,
+    datasets: [{
+      data: shapValues,
+      backgroundColor: shapValues.map(v => v >= 0 ? 'rgba(255,107,107,0.65)' : 'rgba(0,212,170,0.65)'),
+      borderColor: shapValues.map(v => v >= 0 ? '#ff6b6b' : '#00d4aa'),
+      borderWidth: 1.5,
+      borderRadius: 4,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(17,24,39,.95)',
+        borderColor: 'rgba(255,255,255,.1)',
+        borderWidth: 1,
+        titleFont: { family: 'Inter', weight: '600' },
+        bodyFont: { family: 'Inter' },
+        padding: 12,
+        callbacks: {
+          label: ctx => `SHAP Value: ${ctx.raw > 0 ? '+' : ''}${ctx.raw.toFixed(2)}`,
+          afterLabel: ctx => ctx.raw > 0 ? '↑ Increases exacerbation risk' : '↓ Reduces exacerbation risk'
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,.04)' },
+        ticks: { color: '#8892a4', font: { size: 10, family: 'Inter' } },
+        title: {
+          display: true,
+          text: '← Protective                     Risk-Increasing →',
+          color: '#5a6478',
+          font: { size: 10, family: 'Inter' }
+        }
+      },
+      y: {
+        grid: { display: false },
+        ticks: { color: '#c8cdd5', font: { size: 11, family: 'Inter', weight: '500' } }
+      }
+    }
+  }
+});
+
+// ── 72-Hour Risk Timeline Chart ──
+const timelineCtx = document.getElementById('riskTimeline');
+
+// Generate time labels every 4 hours
+const timeLabels = [];
+const baseDate = new Date('2026-05-28T00:00:00');
+for (let i = 0; i <= 18; i++) {
+  const d = new Date(baseDate.getTime() + i * 4 * 60 * 60 * 1000);
+  const day = d.getDate();
+  const hr = d.getHours();
+  const ampm = hr >= 12 ? 'PM' : 'AM';
+  const h12 = hr % 12 || 12;
+  timeLabels.push(`${d.toLocaleDateString('en-US',{month:'short'})} ${day}, ${h12}${ampm}`);
+}
+
+// Risk score trajectory: gradual rise from ~65 to 94
+const riskData = [65, 66, 68, 71, 74, 76, 79, 82, 84, 86, 88, 89, 90, 91, 92, 93, 93.5, 94, 94];
+
+// Threshold line
+const thresholdData = new Array(19).fill(85);
+
+// Current time index (roughly at hour 40, index 10)
+const currentTimeIndex = 10;
+
+// AQI Advisory at hour 24 (index 6), Heatwave at hour 48 (index 12)
+const aqiAdvisoryIndex = 6;
+const heatwaveIndex = 12;
+
+const riskChart = new Chart(timelineCtx, {
+  type: 'line',
+  data: {
+    labels: timeLabels,
+    datasets: [
+      {
+        label: 'Risk Score',
+        data: riskData,
+        borderColor: '#ff6b6b',
+        backgroundColor: (context) => {
+          const chart = context.chart;
+          const { ctx: c, chartArea } = chart;
+          if (!chartArea) return 'rgba(255,107,107,.1)';
+          const gradient = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, 'rgba(255,107,107,.25)');
+          gradient.addColorStop(1, 'rgba(255,107,107,.02)');
+          return gradient;
+        },
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.35,
+        pointRadius: riskData.map((_, i) => i === currentTimeIndex ? 8 : (i === aqiAdvisoryIndex || i === heatwaveIndex ? 6 : 3)),
+        pointBackgroundColor: riskData.map((_, i) => {
+          if (i === currentTimeIndex) return '#00d4aa';
+          if (i === aqiAdvisoryIndex) return '#ffb347';
+          if (i === heatwaveIndex) return '#ff6b6b';
+          return 'rgba(255,107,107,.6)';
+        }),
+        pointBorderColor: riskData.map((_, i) => {
+          if (i === currentTimeIndex) return '#00d4aa';
+          if (i === aqiAdvisoryIndex) return '#ffb347';
+          if (i === heatwaveIndex) return '#ff6b6b';
+          return 'rgba(255,107,107,.3)';
+        }),
+        pointBorderWidth: riskData.map((_, i) => (i === currentTimeIndex || i === aqiAdvisoryIndex || i === heatwaveIndex) ? 3 : 1),
+        pointHoverRadius: 8,
+      },
+      {
+        label: 'Critical Threshold',
+        data: thresholdData,
+        borderColor: 'rgba(255,107,107,.3)',
+        borderWidth: 1.5,
+        borderDash: [8, 4],
+        fill: false,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(17,24,39,.95)',
+        borderColor: 'rgba(255,255,255,.1)',
+        borderWidth: 1,
+        titleFont: { family: 'Inter', weight: '600', size: 12 },
+        bodyFont: { family: 'Inter', size: 11 },
+        padding: 14,
+        callbacks: {
+          label: function(ctx) {
+            if (ctx.datasetIndex === 1) return 'Critical Threshold: 85';
+            let label = `Risk Score: ${ctx.raw}%`;
+            if (ctx.dataIndex === aqiAdvisoryIndex) label += '  ⚠️ AQI Advisory Issued';
+            if (ctx.dataIndex === heatwaveIndex) label += '  🔥 Heatwave Onset';
+            if (ctx.dataIndex === currentTimeIndex) label += '  📍 Current Time';
+            return label;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,.03)' },
+        ticks: {
+          color: '#5a6478',
+          font: { size: 9.5, family: 'Inter' },
+          maxRotation: 45,
+          autoSkip: true,
+          maxTicksLimit: 10,
+        }
+      },
+      y: {
+        min: 50,
+        max: 100,
+        grid: { color: 'rgba(255,255,255,.04)' },
+        ticks: {
+          color: '#8892a4',
+          font: { size: 11, family: 'Inter' },
+          callback: v => v + '%',
+          stepSize: 10,
+        },
+        title: {
+          display: true,
+          text: 'Exacerbation Risk Score',
+          color: '#5a6478',
+          font: { size: 11, family: 'Inter', weight: '500' }
+        }
+      }
+    }
+  },
+  plugins: [{
+    id: 'customAnnotations',
+    afterDraw: function(chart) {
+      const ctx = chart.ctx;
+      const xAxis = chart.scales.x;
+      const yAxis = chart.scales.y;
+      
+      // AQI Advisory annotation
+      const aqiX = xAxis.getPixelForValue(aqiAdvisoryIndex);
+      const aqiY = yAxis.getPixelForValue(riskData[aqiAdvisoryIndex]);
+      ctx.save();
+      ctx.font = '600 10px Inter';
+      ctx.fillStyle = '#ffb347';
+      ctx.textAlign = 'center';
+      ctx.fillText('⚠ AQI Advisory', aqiX, aqiY - 18);
+      ctx.fillText('Issued', aqiX, aqiY - 6);
+      ctx.restore();
+      
+      // Heatwave annotation
+      const heatX = xAxis.getPixelForValue(heatwaveIndex);
+      const heatY = yAxis.getPixelForValue(riskData[heatwaveIndex]);
+      ctx.save();
+      ctx.font = '600 10px Inter';
+      ctx.fillStyle = '#ff6b6b';
+      ctx.textAlign = 'center';
+      ctx.fillText('🔥 Heatwave', heatX, heatY - 18);
+      ctx.fillText('Onset', heatX, heatY - 6);
+      ctx.restore();
+      
+      // Current time vertical line
+      const curX = xAxis.getPixelForValue(currentTimeIndex);
+      ctx.save();
+      ctx.setLineDash([4, 3]);
+      ctx.strokeStyle = 'rgba(0,212,170,.5)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(curX, yAxis.top);
+      ctx.lineTo(curX, yAxis.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // "NOW" label
+      ctx.font = '700 10px Inter';
+      ctx.fillStyle = '#00d4aa';
+      ctx.textAlign = 'center';
+      ctx.fillText('NOW', curX, yAxis.top - 6);
+      ctx.restore();
+    }
+  }]
+});
+
+// ── Pulse animation for current time point ──
+(function animateCurrentPoint() {
+  const dataset = riskChart.data.datasets[0];
+  let grow = true;
+  setInterval(() => {
+    const radii = [...dataset.pointRadius];
+    radii[currentTimeIndex] = grow ? 10 : 6;
+    dataset.pointRadius = radii;
+    grow = !grow;
+    riskChart.update('none');
+  }, 1200);
+})();
+</script>
+</body>
+</html>

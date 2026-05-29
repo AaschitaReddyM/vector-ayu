@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClimaHealth — Analytics · Population Health Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0f1e;--surface:#111827;--card:#1a2235;--card-hover:#1f2a42;
+  --border:rgba(255,255,255,.06);--border-glow:rgba(0,212,170,.15);
+  --teal:#00d4aa;--teal-dim:rgba(0,212,170,.15);--coral:#ff6b6b;
+  --amber:#ffb347;--blue:#4ea8de;--purple:#a78bfa;
+  --text:#f0f4f8;--text-dim:#8892a4;--text-muted:#5a6478;
+  --radius:14px;--radius-sm:10px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{color:var(--teal);text-decoration:none}
+
+/* ── Topbar ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:62px;background:rgba(17,24,39,.85);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.2rem}
+.logo svg{width:28px;height:28px}
+.logo span.accent{color:var(--teal)}
+.nav{display:flex;gap:6px}
+.nav a{padding:8px 16px;border-radius:8px;font-size:.85rem;font-weight:500;color:var(--text-dim);transition:.2s}
+.nav a:hover,.nav a.active{background:var(--teal-dim);color:var(--teal)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:600}
+.badge-dot{width:8px;height:8px;border-radius:50%;background:var(--coral);position:absolute;top:-2px;right:-2px}
+.notif{position:relative;cursor:pointer;color:var(--text-dim);font-size:1.1rem}
+
+/* ── Main Content ── */
+.main-content{padding:28px 36px;max-width:1440px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+
+/* ── Page Header ── */
+.page-header h1{font-size:1.7rem;font-weight:800;letter-spacing:-.3px}
+.page-header h1 span.emoji{margin-right:6px}
+.page-header .subtitle{font-size:.88rem;color:var(--text-dim);margin-top:6px;font-weight:400}
+
+/* ── Metric Cards ── */
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;transition:all .3s cubic-bezier(.25,.8,.25,1);position:relative;overflow:hidden}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:0;transition:opacity .3s}
+.metric-card:hover{border-color:var(--border-glow);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.metric-card:hover::before{opacity:1}
+.metric-card.teal-accent::before{background:linear-gradient(90deg,var(--teal),transparent)}
+.metric-card.green-accent::before{background:linear-gradient(90deg,#2ecc71,transparent)}
+.metric-card.blue-accent::before{background:linear-gradient(90deg,var(--blue),transparent)}
+.metric-card.purple-accent::before{background:linear-gradient(90deg,var(--purple),transparent)}
+.metric-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;margin-bottom:14px}
+.metric-icon.teal-bg{background:var(--teal-dim)}
+.metric-icon.blue-bg{background:rgba(78,168,222,.12)}
+.metric-icon.purple-bg{background:rgba(167,139,250,.12)}
+.metric-icon.green-bg{background:rgba(46,204,113,.12)}
+.metric-label{font-size:.72rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+.metric-value{font-size:2.2rem;font-weight:800;line-height:1}
+.metric-value.teal{color:var(--teal)}
+.metric-value.green{color:#2ecc71}
+.metric-value.blue{color:var(--blue)}
+.metric-value.purple{color:var(--purple)}
+.metric-sub{font-size:.75rem;color:var(--text-muted);margin-top:8px;font-weight:400}
+.metric-sub .up{color:var(--teal)}
+
+/* ── Cards ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .3s}
+.card:hover{border-color:var(--border-glow)}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border)}
+.card-title{font-size:.95rem;font-weight:600}
+.card-body{padding:20px 24px}
+
+/* ── Grid Rows ── */
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+
+/* ── Chart container ── */
+.chart-container{position:relative;height:280px}
+.chart-container.tall{height:320px}
+
+/* ── Doughnut center ── */
+.doughnut-wrapper{position:relative;display:flex;align-items:center;justify-content:center}
+.doughnut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.doughnut-center .num{font-size:1.6rem;font-weight:800;color:var(--text)}
+.doughnut-center .lbl{font-size:.7rem;color:var(--text-dim);margin-top:2px}
+
+/* ── Revenue Model Section ── */
+.revenue-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.revenue-header{padding:20px 28px;border-bottom:1px solid var(--border)}
+.revenue-header h2{font-size:1.1rem;font-weight:700}
+.revenue-header p{font-size:.78rem;color:var(--text-dim);margin-top:4px}
+.revenue-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.revenue-card{padding:28px;border-right:1px solid var(--border);transition:background .3s}
+.revenue-card:last-child{border-right:none}
+.revenue-card:hover{background:var(--card-hover)}
+.revenue-card h3{font-size:.85rem;font-weight:700;margin-bottom:12px;color:var(--text)}
+.revenue-card h3 .icon{margin-right:6px}
+.revenue-card p{font-size:.8rem;color:var(--text-dim);line-height:1.6}
+.revenue-card .highlight{color:var(--teal);font-weight:600}
+
+/* ── Pricing Slider Visual ── */
+.pricing-visual{margin-top:16px;padding:16px 0}
+.pricing-track{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--teal),var(--blue),var(--purple));position:relative;margin:12px 0}
+.pricing-track::before{content:'$0.85';position:absolute;left:0;top:-20px;font-size:.72rem;color:var(--teal);font-weight:600}
+.pricing-track::after{content:'$2.50';position:absolute;right:0;top:-20px;font-size:.72rem;color:var(--purple);font-weight:600}
+.pricing-marker{position:absolute;top:-6px;left:35%;width:20px;height:20px;border-radius:50%;background:var(--text);border:3px solid var(--teal);box-shadow:0 2px 12px rgba(0,212,170,.4);cursor:pointer;transition:transform .2s}
+.pricing-marker:hover{transform:scale(1.2)}
+.pricing-label{text-align:center;font-size:.75rem;color:var(--text-muted);margin-top:10px}
+
+/* ── ROI Calculator ── */
+.roi-calc{margin-top:14px}
+.roi-input-group{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.roi-input-group label{font-size:.78rem;color:var(--text-dim);white-space:nowrap}
+.roi-input{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:.9rem;font-weight:600;width:140px;outline:none;transition:border-color .3s}
+.roi-input:focus{border-color:var(--teal)}
+.roi-results{display:flex;flex-direction:column;gap:10px}
+.roi-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.02)}
+.roi-row .label{font-size:.78rem;color:var(--text-dim)}
+.roi-row .value{font-size:.95rem;font-weight:700}
+.roi-row .value.savings{color:var(--teal)}
+.roi-row .value.cost{color:var(--amber)}
+.roi-row .value.roi{color:#2ecc71;font-size:1.1rem}
+
+/* ── Population Summary ── */
+.pop-summary{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px}
+.pop-summary h3{font-size:.95rem;font-weight:700;margin-bottom:18px}
+.pop-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pop-stat{text-align:center;padding:20px;border-radius:var(--radius-sm);background:rgba(255,255,255,.02);border:1px solid var(--border);transition:all .3s}
+.pop-stat:hover{border-color:var(--border-glow);background:rgba(0,212,170,.03)}
+.pop-stat .num{font-size:1.6rem;font-weight:800;color:var(--teal)}
+.pop-stat .lbl{font-size:.78rem;color:var(--text-dim);margin-top:6px}
+.pop-stat .detail{font-size:.72rem;color:var(--text-muted);margin-top:4px}
+.pop-stat .track-split{display:flex;gap:12px;justify-content:center;margin-top:8px}
+.pop-stat .track{font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:6px}
+.track-a{background:rgba(0,212,170,.1);color:var(--teal)}
+.track-b{background:rgba(255,179,71,.1);color:var(--amber)}
+
+/* ── Animations ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .5s ease forwards;opacity:0}
+.fade-up:nth-child(1){animation-delay:.05s}
+.fade-up:nth-child(2){animation-delay:.1s}
+.fade-up:nth-child(3){animation-delay:.15s}
+.fade-up:nth-child(4){animation-delay:.2s}
+@keyframes countUp{from{opacity:0}to{opacity:1}}
+
+/* ── Responsive ── */
+@media(max-width:1100px){
+  .metric-row{grid-template-columns:repeat(2,1fr)}
+  .row-2{grid-template-columns:1fr}
+  .revenue-grid{grid-template-columns:1fr}
+  .revenue-card{border-right:none;border-bottom:1px solid var(--border)}
+  .revenue-card:last-child{border-bottom:none}
+  .pop-stats{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .metric-row{grid-template-columns:1fr}
+  .main-content{padding:20px 16px}
+  .nav{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" stroke="url(#g)" stroke-width="2.5"/><path d="M16 8v8l6 4" stroke="url(#g)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="g" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#00d4aa"/><stop offset="1" stop-color="#4ea8de"/></linearGradient></defs></svg>
+    Clima<span class="accent">Health</span>
+  </div>
+  <nav class="nav">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="patient-detail.html">Patients</a>
+    <a href="outreach.html">Campaigns</a>
+    <a href="consumer.html">Consumer App</a>
+    <a href="analytics.html" class="active">Analytics</a>
+    <a href="plan.html">Plan</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="notif">🔔<span class="badge-dot"></span></div>
+    <div class="avatar">DR</div>
+  </div>
+</header>
+
+<div class="main-content">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1><span class="emoji">📊</span> ClimaHealth Analytics — Population Health Intelligence</h1>
+    <p class="subtitle">Real-time operational metrics for DFW Metro · May 2026</p>
+  </div>
+
+  <!-- Top Metric Cards -->
+  <div class="metric-row">
+    <div class="metric-card teal-accent fade-up">
+      <div class="metric-icon teal-bg">🏥</div>
+      <div class="metric-label">ED Visits Prevented</div>
+      <div class="metric-value teal" id="counter-ed">847</div>
+      <div class="metric-sub"><span class="up">↑ 12%</span> vs baseline period</div>
+    </div>
+    <div class="metric-card green-accent fade-up">
+      <div class="metric-icon green-bg">💰</div>
+      <div class="metric-label">Estimated Savings</div>
+      <div class="metric-value green" id="counter-savings">$2.1M</div>
+      <div class="metric-sub">At $2,500 per avoided ED visit</div>
+    </div>
+    <div class="metric-card blue-accent fade-up">
+      <div class="metric-icon blue-bg">📨</div>
+      <div class="metric-label">Interventions Sent</div>
+      <div class="metric-value blue" id="counter-interventions">3,241</div>
+      <div class="metric-sub">This month · 98.2% delivery rate</div>
+    </div>
+    <div class="metric-card purple-accent fade-up">
+      <div class="metric-icon purple-bg">📊</div>
+      <div class="metric-label">Patient Engagement</div>
+      <div class="metric-value purple" id="counter-engagement">73%</div>
+      <div class="metric-sub">SMS response rate · Track A</div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="row-2">
+    <!-- Interventions Over Time -->
+    <div class="card fade-up">
+      <div class="card-header">
+        <span class="card-title">📈 Interventions Over Time</span>
+        <span style="font-size:.72rem;color:var(--text-muted)">Last 14 days</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-container"><canvas id="interventionsChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Risk Tier Distribution -->
+    <div class="card fade-up">
+      <div class="card-header">
+        <span class="card-title">🎯 Risk Tier Distribution</span>
+        <span style="font-size:.72rem;color:var(--text-muted)">Active patient population</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-container doughnut-wrapper">
+          <canvas id="riskTierChart"></canvas>
+          <div class="doughnut-center">
+            <div class="num">2,847</div>
+            <div class="lbl">Total Patients</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div class="row-2">
+    <!-- ED Utilization: Predicted vs Actual -->
+    <div class="card fade-up">
+      <div class="card-header">
+        <span class="card-title">🏥 ED Utilization: Predicted vs Actual</span>
+        <span style="font-size:.72rem;color:var(--text-muted)">30-day rolling window</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-container tall"><canvas id="edUtilChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- COPD Severity Stage Distribution -->
+    <div class="card fade-up">
+      <div class="card-header">
+        <span class="card-title">🫁 COPD Severity Stage Distribution</span>
+        <span style="font-size:.72rem;color:var(--text-muted)">Monthly · 2026</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-container tall"><canvas id="predHeadChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenue Model Section -->
+  <div class="revenue-section fade-up">
+    <div class="revenue-header">
+      <h2>💼 Enterprise Revenue Model</h2>
+      <p>B2B SaaS platform designed for Medicare Advantage Plans, ACOs, and risk-bearing healthcare organizations</p>
+    </div>
+    <div class="revenue-grid">
+      <!-- Target Market -->
+      <div class="revenue-card">
+        <h3><span class="icon">🎯</span> Target Market</h3>
+        <p>Medicare Advantage Plans, ACOs, and Risk-Bearing Healthcare Groups serving chronic disease populations across major US metros.</p>
+        <div style="margin-top:16px;padding:14px;background:rgba(0,212,170,.04);border-radius:10px;border:1px solid rgba(0,212,170,.1)">
+          <div style="font-size:.78rem;color:var(--text-dim);margin-bottom:6px">Market Opportunity</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--teal)">143M</div>
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">Medicare beneficiaries nationwide</div>
+          <div style="margin-top:10px;font-size:.78rem;color:var(--text-dim)">Avg annual cost per COPD patient:</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--amber)">$12,000</div>
+        </div>
+      </div>
+
+      <!-- Pricing Model -->
+      <div class="revenue-card">
+        <h3><span class="icon">💲</span> Pricing Model</h3>
+        <p>PMPM (Per Member Per Month) Enterprise SaaS with volume-based tiering. Price scales inversely with population size.</p>
+        <div class="pricing-visual">
+          <div style="font-size:.78rem;color:var(--text-dim);margin-bottom:4px">PMPM Price Range</div>
+          <div class="pricing-track">
+            <div class="pricing-marker" title="Typical pricing: ~$1.20 PMPM"></div>
+          </div>
+          <div class="pricing-label">Price adjusts by population size and disease vector coverage</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <span style="padding:4px 10px;border-radius:6px;font-size:.7rem;font-weight:500;background:rgba(0,212,170,.08);color:var(--teal)">Enterprise License</span>
+          <span style="padding:4px 10px;border-radius:6px;font-size:.7rem;font-weight:500;background:rgba(78,168,222,.08);color:var(--blue)">SMART on FHIR</span>
+          <span style="padding:4px 10px;border-radius:6px;font-size:.7rem;font-weight:500;background:rgba(167,139,250,.08);color:var(--purple)">API Access</span>
+        </div>
+      </div>
+
+      <!-- ROI Calculator -->
+      <div class="revenue-card">
+        <h3><span class="icon">📐</span> ROI Calculator</h3>
+        <div class="roi-calc">
+          <div class="roi-input-group">
+            <label for="panelSize">Panel Size:</label>
+            <input type="text" class="roi-input" id="panelSize" value="50,000">
+            <span style="font-size:.72rem;color:var(--text-muted)">members</span>
+          </div>
+          <div class="roi-results" id="roiResults">
+            <div class="roi-row">
+              <span class="label">Projected Annual Savings</span>
+              <span class="value savings" id="roiSavings">$4.2M</span>
+            </div>
+            <div class="roi-row">
+              <span class="label">ClimaHealth Annual Cost</span>
+              <span class="value cost" id="roiCost">$510K</span>
+            </div>
+            <div class="roi-row" style="background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.12)">
+              <span class="label" style="font-weight:600;color:var(--text)">Net ROI</span>
+              <span class="value roi" id="roiPercent">723%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Population Health Summary -->
+  <div class="pop-summary fade-up">
+    <h3>🌍 Population Health Summary — DFW Metro</h3>
+    <div class="pop-stats">
+      <div class="pop-stat">
+        <div class="num">2,847</div>
+        <div class="lbl">Total Monitored Patients</div>
+        <div class="detail">Active COPD patients · DFW Metro</div>
+      </div>
+      <div class="pop-stat">
+        <div class="num" style="font-size:1.3rem">Consent Split</div>
+        <div class="lbl">Dual-Track Consent Distribution</div>
+        <div class="track-split">
+          <span class="track track-a">Track A: 87% (2,477)</span>
+          <span class="track track-b">Track B: 13% (370)</span>
+        </div>
+      </div>
+      <div class="pop-stat">
+        <div class="num">847</div>
+        <div class="lbl">H3 Hexagonal Cells</div>
+        <div class="detail">Resolution 7 · DFW Metro Coverage</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Chart.js Global Defaults ──
+Chart.defaults.color = '#8892a4';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(17,24,39,.92)';
+Chart.defaults.plugins.tooltip.borderColor = 'rgba(255,255,255,.08)';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.cornerRadius = 10;
+Chart.defaults.plugins.tooltip.padding = 12;
+Chart.defaults.plugins.tooltip.titleFont = { weight: '600', size: 13 };
+Chart.defaults.plugins.tooltip.bodyFont = { size: 12 };
+
+// ── 1. Interventions Over Time (Bar Chart) ──
+const intDates = [];
+for (let i = 14; i >= 1; i--) {
+  const d = new Date(2026, 4, 29 - i);
+  intDates.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+}
+const intData = [45, 62, 38, 91, 120, 85, 72, 156, 134, 98, 167, 143, 189, 201];
+
+new Chart(document.getElementById('interventionsChart'), {
+  type: 'bar',
+  data: {
+    labels: intDates,
+    datasets: [{
+      label: 'Interventions Sent',
+      data: intData,
+      backgroundColor: (ctx) => {
+        const chart = ctx.chart;
+        const { ctx: c, chartArea } = chart;
+        if (!chartArea) return 'rgba(0,212,170,0.6)';
+        const gradient = c.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+        gradient.addColorStop(0, 'rgba(0,212,170,0.3)');
+        gradient.addColorStop(1, 'rgba(0,212,170,0.85)');
+        return gradient;
+      },
+      borderColor: 'rgba(0,212,170,0.9)',
+      borderWidth: 1,
+      borderRadius: 6,
+      borderSkipped: false,
+      hoverBackgroundColor: 'rgba(0,212,170,0.95)',
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: (items) => items[0].label,
+          label: (ctx) => `  ${ctx.parsed.y} interventions sent`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 30 }
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,.04)' },
+        ticks: { font: { size: 11 } },
+        beginAtZero: true
+      }
+    }
+  }
+});
+
+// ── 2. Risk Tier Distribution (Doughnut Chart) ──
+new Chart(document.getElementById('riskTierChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Critical (5%)', 'High (13.5%)', 'Moderate (31.3%)', 'Low (50.2%)'],
+    datasets: [{
+      data: [142, 384, 891, 1430],
+      backgroundColor: [
+        'rgba(255,107,107,0.85)',
+        'rgba(255,179,71,0.85)',
+        'rgba(78,168,222,0.85)',
+        'rgba(0,212,170,0.85)'
+      ],
+      borderColor: [
+        'rgba(255,107,107,1)',
+        'rgba(255,179,71,1)',
+        'rgba(78,168,222,1)',
+        'rgba(0,212,170,1)'
+      ],
+      borderWidth: 2,
+      hoverBorderWidth: 3,
+      hoverOffset: 8,
+      spacing: 3
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '65%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          padding: 16,
+          usePointStyle: true,
+          pointStyleWidth: 10,
+          font: { size: 11.5, weight: '500' }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+            const pct = ((ctx.parsed / total) * 100).toFixed(1);
+            return `  ${ctx.label}: ${ctx.parsed.toLocaleString()} patients (${pct}%)`;
+          }
+        }
+      }
+    }
+  }
+});
+
+// ── 3. ED Utilization: Predicted vs Actual (Line Chart) ──
+const edLabels = [];
+for (let i = 30; i >= 1; i--) {
+  const d = new Date(2026, 4, 29 - i);
+  edLabels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+}
+
+// Predicted without intervention (trending upward from ~40 to ~95)
+const predictedData = [];
+for (let i = 0; i < 30; i++) {
+  const base = 40 + (i * 1.9);
+  const noise = (Math.sin(i * 0.8) * 5) + (Math.random() * 6 - 3);
+  predictedData.push(Math.round(Math.min(98, base + noise)));
+}
+
+// Actual with ClimaHealth (stays flat around 25-35)
+const actualData = [];
+for (let i = 0; i < 30; i++) {
+  const base = 28;
+  const noise = Math.sin(i * 0.6) * 4 + (Math.random() * 5 - 2.5);
+  actualData.push(Math.round(Math.max(20, Math.min(38, base + noise))));
+}
+
+const edCtx = document.getElementById('edUtilChart').getContext('2d');
+const edGradient = edCtx.createLinearGradient(0, 0, 0, 350);
+edGradient.addColorStop(0, 'rgba(255,107,107,0.12)');
+edGradient.addColorStop(1, 'rgba(0,212,170,0.02)');
+
+new Chart(edCtx, {
+  type: 'line',
+  data: {
+    labels: edLabels,
+    datasets: [
+      {
+        label: 'Predicted without intervention',
+        data: predictedData,
+        borderColor: '#ff6b6b',
+        borderWidth: 2.5,
+        borderDash: [8, 4],
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#ff6b6b',
+        tension: 0.35,
+        fill: '+1',
+        backgroundColor: edGradient,
+        order: 1
+      },
+      {
+        label: 'Actual with ClimaHealth',
+        data: actualData,
+        borderColor: '#00d4aa',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#00d4aa',
+        tension: 0.35,
+        fill: false,
+        order: 0
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          padding: 20,
+          usePointStyle: true,
+          pointStyleWidth: 12,
+          font: { size: 11.5, weight: '500' }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          afterBody: (items) => {
+            if (items.length >= 2) {
+              const diff = items[0].parsed.y - items[1].parsed.y;
+              return `\n  ✓ ${diff} ED visits prevented`;
+            }
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { font: { size: 9.5 }, maxRotation: 45, minRotation: 30, maxTicksLimit: 10 }
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,.04)' },
+        ticks: { font: { size: 11 } },
+        beginAtZero: true,
+        title: { display: true, text: 'ED Visits / Day', color: '#5a6478', font: { size: 11 } }
+      }
+    }
+  }
+});
+
+// ── 4. COPD Severity Stage Distribution (Stacked Bar) ──
+new Chart(document.getElementById('predHeadChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Jan 2026', 'Feb 2026', 'Mar 2026', 'Apr 2026', 'May 2026'],
+    datasets: [
+      {
+        label: 'Stage IV (Very Severe)',
+        data: [85, 92, 105, 118, 134],
+        backgroundColor: 'rgba(255,107,107,0.8)',
+        borderColor: 'rgba(255,107,107,1)',
+        borderWidth: 1,
+        borderRadius: { topLeft: 0, topRight: 0 },
+        borderSkipped: false
+      },
+      {
+        label: 'Stage III (Severe)',
+        data: [210, 228, 256, 280, 312],
+        backgroundColor: 'rgba(255,179,71,0.8)',
+        borderColor: 'rgba(255,179,71,1)',
+        borderWidth: 1,
+        borderRadius: 0,
+        borderSkipped: false
+      },
+      {
+        label: 'Stage II (Moderate)',
+        data: [340, 355, 380, 405, 430],
+        backgroundColor: 'rgba(78,168,222,0.8)',
+        borderColor: 'rgba(78,168,222,1)',
+        borderWidth: 1,
+        borderRadius: 0,
+        borderSkipped: false
+      },
+      {
+        label: 'Stage I (Mild)',
+        data: [180, 195, 210, 225, 245],
+        backgroundColor: 'rgba(0,212,170,0.8)',
+        borderColor: 'rgba(0,212,170,1)',
+        borderWidth: 1,
+        borderRadius: { topLeft: 6, topRight: 6 },
+        borderSkipped: false
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          padding: 20,
+          usePointStyle: true,
+          pointStyleWidth: 10,
+          font: { size: 11.5, weight: '500' }
+        }
+      },
+      tooltip: {
+        callbacks: {
+          afterBody: (items) => {
+            const total = items.reduce((s, i) => s + i.parsed.y, 0);
+            return `\n  Total: ${total} COPD patients flagged`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        stacked: true,
+        grid: { display: false },
+        ticks: { font: { size: 11.5, weight: '500' } }
+      },
+      y: {
+        stacked: true,
+        grid: { color: 'rgba(255,255,255,.04)' },
+        ticks: { font: { size: 11 } },
+        beginAtZero: true,
+        title: { display: true, text: 'COPD Patients Flagged', color: '#5a6478', font: { size: 11 } }
+      }
+    }
+  }
+});
+
+// ── ROI Calculator Logic ──
+const panelInput = document.getElementById('panelSize');
+const roiSavings = document.getElementById('roiSavings');
+const roiCost = document.getElementById('roiCost');
+const roiPercent = document.getElementById('roiPercent');
+
+function formatCurrency(val) {
+  if (val >= 1e9) return '$' + (val / 1e9).toFixed(1) + 'B';
+  if (val >= 1e6) return '$' + (val / 1e6).toFixed(1) + 'M';
+  if (val >= 1e3) return '$' + (val / 1e3).toFixed(0) + 'K';
+  return '$' + val.toFixed(0);
+}
+
+function calculateROI() {
+  const raw = panelInput.value.replace(/[^0-9]/g, '');
+  const size = parseInt(raw) || 0;
+
+  // ~8.4% of members are at-risk, ~17% of those have prevented ED visit
+  // $2,500 savings per prevented visit
+  const atRiskRate = 0.084;
+  const preventionRate = 0.17;
+  const savingsPerVisit = 2500;
+  const annualSavings = size * atRiskRate * preventionRate * savingsPerVisit * 12 / 12;
+
+  // PMPM cost: ~$0.85 for large panels, $2.50 for small; linear interpolation
+  const pmpmRate = Math.max(0.85, Math.min(2.50, 2.50 - (size / 100000) * 1.65));
+  const annualCost = size * pmpmRate * 12;
+
+  const roi = annualCost > 0 ? ((annualSavings - annualCost) / annualCost * 100) : 0;
+
+  roiSavings.textContent = formatCurrency(annualSavings);
+  roiCost.textContent = formatCurrency(annualCost);
+  roiPercent.textContent = Math.round(roi) + '%';
+
+  // Format input with commas
+  if (raw) {
+    panelInput.value = parseInt(raw).toLocaleString();
+  }
+}
+
+panelInput.addEventListener('input', calculateROI);
+panelInput.addEventListener('focus', function() {
+  this.select();
+});
+
+// ── Animated Counter ──
+function animateCounter(el, target, prefix, suffix) {
+  const duration = 1200;
+  const start = performance.now();
+  const initial = 0;
+
+  function update(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease out cubic
+    const current = Math.round(initial + (target - initial) * eased);
+    el.textContent = (prefix || '') + current.toLocaleString() + (suffix || '');
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+// Trigger counters on load
+window.addEventListener('DOMContentLoaded', () => {
+  animateCounter(document.getElementById('counter-ed'), 847, '', '');
+  animateCounter(document.getElementById('counter-interventions'), 3241, '', '');
+
+  // Savings counter
+  const savingsEl = document.getElementById('counter-savings');
+  const dur = 1200;
+  const st = performance.now();
+  function updateSavings(now) {
+    const p = Math.min((now - st) / dur, 1);
+    const e = 1 - Math.pow(1 - p, 3);
+    const v = (2.1 * e).toFixed(1);
+    savingsEl.textContent = '$' + v + 'M';
+    if (p < 1) requestAnimationFrame(updateSavings);
+  }
+  requestAnimationFrame(updateSavings);
+
+  // Engagement counter
+  const engEl = document.getElementById('counter-engagement');
+  const st2 = performance.now();
+  function updateEng(now) {
+    const p = Math.min((now - st2) / dur, 1);
+    const e = 1 - Math.pow(1 - p, 3);
+    engEl.textContent = Math.round(73 * e) + '%';
+    if (p < 1) requestAnimationFrame(updateEng);
+  }
+  requestAnimationFrame(updateEng);
+});
+
+// ── Intersection Observer for fade-up animations ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.animationPlayState = 'running';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-up').forEach(el => {
+  el.style.animationPlayState = 'paused';
+  observer.observe(el);
+});
+</script>
+</body>
+</html>

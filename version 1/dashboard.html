@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClimaHealth — 72-Hour Provider Triage Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0f1e;--surface:#111827;--card:#1a2235;--card-hover:#1f2a42;
+  --border:rgba(255,255,255,.06);--border-glow:rgba(0,212,170,.15);
+  --teal:#00d4aa;--teal-dim:rgba(0,212,170,.15);--coral:#ff6b6b;
+  --amber:#ffb347;--blue:#4ea8de;--purple:#a78bfa;
+  --text:#f0f4f8;--text-dim:#8892a4;--text-muted:#5a6478;
+  --radius:14px;--radius-sm:10px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{color:var(--teal);text-decoration:none}
+
+/* ── Topbar ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:62px;background:rgba(17,24,39,.85);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.2rem}
+.logo svg{width:28px;height:28px}
+.logo span.accent{color:var(--teal)}
+.nav{display:flex;gap:6px}
+.nav a{padding:8px 16px;border-radius:8px;font-size:.85rem;font-weight:500;color:var(--text-dim);transition:.2s}
+.nav a:hover,.nav a.active{background:var(--teal-dim);color:var(--teal)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--blue));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:600}
+.badge-dot{width:8px;height:8px;border-radius:50%;background:var(--coral);position:absolute;top:-2px;right:-2px}
+.notif{position:relative;cursor:pointer;color:var(--text-dim);font-size:1.1rem}
+
+/* ── Layout ── */
+.layout{display:grid;grid-template-columns:240px 1fr;gap:0;min-height:calc(100vh - 62px)}
+.sidebar{padding:20px 16px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:14px}
+.main{padding:20px 24px;display:flex;flex-direction:column;gap:20px;overflow-y:auto}
+
+/* ── Stat Cards ── */
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:.25s}
+.stat-card:hover{border-color:var(--border-glow);transform:translateY(-2px)}
+.stat-label{font-size:.72rem;font-weight:500;color:var(--text-dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.stat-value{font-size:1.8rem;font-weight:700;line-height:1.1}
+.stat-sub{font-size:.7rem;color:var(--text-muted);margin-top:4px}
+.stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:.95rem}
+.stat-icon.teal{background:var(--teal-dim);color:var(--teal)}
+.stat-icon.coral{background:rgba(255,107,107,.12);color:var(--coral)}
+.stat-icon.amber{background:rgba(255,179,71,.12);color:var(--amber)}
+.stat-icon.blue{background:rgba(78,168,222,.12);color:var(--blue)}
+
+/* ── Progress Bar (Triage Constrainer) ── */
+.mini-progress{width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,.06);margin-top:8px;overflow:hidden}
+.mini-progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--teal),var(--blue));transition:width .6s ease}
+.constrainer-label{display:flex;justify-content:space-between;font-size:.65rem;color:var(--text-muted);margin-top:4px}
+
+/* ── Cards ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.card-title{font-size:.95rem;font-weight:600}
+.card-body{padding:16px 20px}
+
+/* ── Grid Rows ── */
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.row-map{display:grid;grid-template-columns:1fr;gap:20px}
+
+/* ── Hex Map ── */
+.hex-map-container{position:relative;height:370px;background:linear-gradient(135deg,#0d1525,#121d33);border-radius:var(--radius-sm);overflow:hidden}
+.hex-map-container svg{width:100%;height:100%}
+.env-overlay{position:absolute;bottom:14px;right:14px;background:rgba(17,24,39,.9);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 18px;min-width:240px}
+.env-overlay h4{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;color:var(--text-dim)}
+.env-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:.78rem}
+.env-row .label{color:var(--text-dim)}
+.env-row .val{font-weight:600}
+.env-row .val.danger{color:var(--coral)}
+.env-row .val.warn{color:var(--amber)}
+.env-row .val.ok{color:var(--teal)}
+.map-label{position:absolute;font-size:.65rem;color:rgba(255,255,255,.4);font-weight:500;pointer-events:none;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+
+/* ── Table ── */
+.triage-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.triage-table th{text-align:left;padding:10px 12px;font-weight:500;color:var(--text-dim);font-size:.7rem;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.triage-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.triage-table tr{transition:.2s}
+.triage-table tbody tr:hover{background:rgba(255,255,255,.03)}
+.risk-bar{width:72px;height:7px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px}
+.risk-bar-fill{height:100%;border-radius:4px;transition:width .6s ease, background .6s ease}
+.badge{padding:3px 9px;border-radius:6px;font-size:.68rem;font-weight:600;display:inline-block}
+.badge-a{background:rgba(0,212,170,.12);color:var(--teal)}
+.badge-b{background:rgba(255,179,71,.12);color:var(--amber)}
+.badge-critical{background:rgba(255,107,107,.12);color:var(--coral)}
+.badge-high{background:rgba(255,179,71,.12);color:var(--amber)}
+.badge-moderate{background:rgba(78,168,222,.12);color:var(--blue)}
+.badge-data{padding:2px 7px;border-radius:5px;font-size:.62rem;font-weight:600;letter-spacing:.3px}
+.badge-data-full{background:rgba(0,212,170,.1);color:var(--teal)}
+.badge-data-standard{background:rgba(255,179,71,.1);color:var(--amber)}
+.badge-data-climate{background:rgba(255,107,107,.1);color:var(--coral)}
+.btn-sm{padding:6px 14px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;font-size:.72rem;font-weight:500;transition:.2s}
+.btn-sm:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-dim)}
+
+/* ── Campaign Queue ── */
+.campaign-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);transition:background .3s}
+.campaign-item:last-child{border:none}
+.campaign-info{flex:1}
+.campaign-info h5{font-size:.82rem;font-weight:500}
+.campaign-info p{font-size:.7rem;color:var(--text-dim);margin-top:2px}
+.campaign-count{font-size:.72rem;font-weight:600;color:var(--text-dim);flex-shrink:0;margin-left:12px}
+.btn-approve{width:100%;margin-top:14px;padding:12px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,#00d4aa,#00b894);color:#0a0f1e;font-weight:700;font-size:.85rem;cursor:pointer;transition:.25s;letter-spacing:.3px}
+.btn-approve:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,212,170,.25)}
+
+/* ── Chart container ── */
+.chart-container{position:relative;height:240px}
+
+/* ── Simulation Button ── */
+.btn-simulate{padding:8px 18px;border-radius:8px;border:1px solid rgba(167,139,250,.3);background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(78,168,222,.12));color:var(--purple);font-weight:600;font-size:.78rem;cursor:pointer;transition:.25s;letter-spacing:.2px;display:flex;align-items:center;gap:6px}
+.btn-simulate:hover{border-color:var(--purple);background:linear-gradient(135deg,rgba(167,139,250,.2),rgba(78,168,222,.2));transform:translateY(-1px);box-shadow:0 4px 16px rgba(167,139,250,.2)}
+.btn-simulate:active{transform:scale(.97)}
+.btn-simulate:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ── Toast ── */
+.toast{position:fixed;top:80px;right:24px;background:rgba(17,24,39,.95);backdrop-filter:blur(20px);border:1px solid rgba(255,107,107,.25);border-radius:var(--radius);padding:16px 22px;font-size:.84rem;font-weight:500;color:var(--text);z-index:200;transform:translateX(120%);transition:transform .45s cubic-bezier(.16,1,.3,1),opacity .45s;opacity:0;max-width:420px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.toast.show{transform:translateX(0);opacity:1}
+.toast .toast-icon{font-size:1.1rem;margin-right:8px}
+.toast .toast-sub{font-size:.72rem;color:var(--text-dim);margin-top:4px}
+
+/* ── Pulse animation ── */
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+.pulse{animation:pulse 2s ease-in-out infinite}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeInUp .4s ease forwards}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;animation:pulse 2s ease-in-out infinite;margin-right:6px;vertical-align:middle}
+
+/* ── Urgent campaign highlight ── */
+.campaign-item.urgent{background:rgba(255,107,107,.05);border-left:3px solid var(--coral);padding-left:12px;margin-left:-2px}
+.campaign-item.urgent h5{color:var(--coral)}
+
+/* ── Responsive ── */
+@media(max-width:1100px){.row-2{grid-template-columns:1fr}}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{flex-direction:row;flex-wrap:wrap;border-right:none;border-bottom:1px solid var(--border)}.stat-card{flex:1;min-width:140px}.row-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" stroke="url(#g)" stroke-width="2.5"/><path d="M16 8v8l6 4" stroke="url(#g)" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="g" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#00d4aa"/><stop offset="1" stop-color="#4ea8de"/></linearGradient></defs></svg>
+    Clima<span class="accent">Health</span>
+  </div>
+  <nav class="nav">
+    <a href="dashboard.html" class="active">Dashboard</a>
+    <a href="patient-detail.html">Patients</a>
+    <a href="outreach.html">Campaigns</a>
+    <a href="consumer.html">Consumer App</a>
+    <a href="analytics.html">Analytics</a>
+    <a href="plan.html">Plan</a>
+  </nav>
+  <div class="topbar-right">
+    <div class="notif">🔔<span class="badge-dot"></span></div>
+    <div class="avatar">DR</div>
+  </div>
+</header>
+
+<!-- Toast Notification -->
+<div class="toast" id="simToast">
+  <span class="toast-icon">⚠️</span>Environmental escalation detected — 23 patients re-prioritized
+  <div class="toast-sub">AQI surged to 258 (Very Unhealthy) · Campaign auto-generated</div>
+</div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="stat-card">
+      <div class="stat-icon teal">👥</div>
+      <div class="stat-label">Active Patients</div>
+      <div class="stat-value" id="counter-patients">2,847</div>
+      <div class="stat-sub">↑ 12 since yesterday</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon coral">⚠️</div>
+      <div class="stat-label">High Risk</div>
+      <div class="stat-value" style="color:var(--coral)" id="counter-highrisk">142</div>
+      <div class="stat-sub">↑ 23 from climate delta</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon amber">📨</div>
+      <div class="stat-label">Campaigns Pending</div>
+      <div class="stat-value" style="color:var(--amber)">8</div>
+      <div class="stat-sub">3 awaiting approval</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue">🎯</div>
+      <div class="stat-label">Triage Constrainer</div>
+      <div class="stat-value" style="font-size:1.1rem;line-height:1.4">Top <span style="color:var(--blue)">4.9%</span> flagged</div>
+      <div class="stat-sub" id="constrainer-text">142 / 2,847 patients</div>
+      <div class="mini-progress"><div class="mini-progress-fill" id="constrainerBar" style="width:4.9%"></div></div>
+      <div class="constrainer-label"><span>0%</span><span>Token Bucket Limit: 5%</span></div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Hex Map -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><span class="live-dot"></span>🗺️ DFW Geospatial Risk Map — H3 Resolution 7</span>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="btn-simulate" id="btnSimulate" onclick="runSimulation()">
+            <span>▶</span> Run Live Simulation
+          </button>
+          <span style="font-size:.72rem;color:var(--text-muted)">Live · Updated 2 min ago</span>
+        </div>
+      </div>
+      <div class="hex-map-container" id="hexMap">
+        <svg id="hexSvg" viewBox="0 0 900 350"></svg>
+        <!-- City Labels -->
+        <div class="map-label" style="left:18%;top:44%">Fort Worth</div>
+        <div class="map-label" style="left:62%;top:26%">Dallas</div>
+        <div class="map-label" style="left:42%;top:72%">Arlington</div>
+        <div class="map-label" style="left:79%;top:56%">Mesquite</div>
+        <div class="map-label" style="left:32%;top:14%">Denton</div>
+        <div class="map-label" style="left:72%;top:16%">Plano</div>
+        <div class="map-label" style="left:50%;top:52%">Irving</div>
+        <!-- Environmental Overlay -->
+        <div class="env-overlay">
+          <h4>🌐 Environmental Threat Level</h4>
+          <div class="env-row"><span class="label">🌬️ AQI</span><span class="val danger" id="envAqi">207 — Unhealthy</span></div>
+          <div class="env-row"><span class="label">🌡️ Temperature</span><span class="val warn">103°F</span></div>
+          <div class="env-row"><span class="label">☁️ Ozone</span><span class="val danger">0.089 ppm</span></div>
+          <div class="env-row"><span class="label">💧 Humidity</span><span class="val ok">42%</span></div>
+          <div class="env-row"><span class="label">📊 Barometric</span><span class="val warn">29.72 inHg</span></div>
+          <div class="env-row"><span class="label">🔥 Wildfire Smoke</span><span class="val warn">Moderate</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Triage Table -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📋 72-Hour Patient Triage Queue</span>
+        <span style="font-size:.72rem;color:var(--text-dim)">Sorted by Climate Volatility Delta ↓ · Token Bucket: <span style="color:var(--teal)">142/2,847</span></span>
+      </div>
+      <div class="card-body" style="padding:0;overflow-x:auto">
+        <table class="triage-table">
+          <thead><tr>
+            <th>Patient ID</th>
+            <th>Risk Score</th>
+            <th>Primary Condition</th>
+            <th>Climate Δ</th>
+            <th>Data Tier</th>
+            <th>Consent</th>
+            <th>Risk Tier</th>
+            <th>Action</th>
+          </tr></thead>
+          <tbody id="triageBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bottom Row: SHAP + Campaigns -->
+    <div class="row-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🔍 SHAP Feature Attribution — Patient #TX-30158</span>
+          <span style="font-size:.68rem;color:var(--text-muted)">Explainability Layer</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-container"><canvas id="shapChart"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📨 48-Hour Campaign Queue</span>
+          <span style="font-size:.68rem;color:var(--text-muted)">Approve & Release</span>
+        </div>
+        <div class="card-body" id="campaignBody">
+          <div class="campaign-item">
+            <div class="campaign-info">
+              <h5>🔥 Heat Advisory — COPD Panel</h5>
+              <p>SMS · 412 patients · Track A</p>
+            </div>
+            <div class="campaign-count"><span class="badge badge-a">Pending</span></div>
+          </div>
+          <div class="campaign-item">
+            <div class="campaign-info">
+              <h5>☁️ Ozone Alert — COPD Rescue Inhaler Reminder</h5>
+              <p>SMS · 287 patients · Track A</p>
+            </div>
+            <div class="campaign-count"><span class="badge badge-a">Pending</span></div>
+          </div>
+          <div class="campaign-item">
+            <div class="campaign-info">
+              <h5>🫁 AQI Spike — COPD Exacerbation Warning</h5>
+              <p>SMS + IVR · 148 patients · Track A</p>
+            </div>
+            <div class="campaign-count"><span class="badge badge-a">Pending</span></div>
+          </div>
+          <div class="campaign-item">
+            <div class="campaign-info">
+              <h5>📞 Manual Outreach — Non-Consented COPD</h5>
+              <p>Phone Call · 94 patients · Track B</p>
+            </div>
+            <div class="campaign-count"><span class="badge badge-b">Review</span></div>
+          </div>
+          <button class="btn-approve" id="btnApprove" onclick="approveCampaigns(this)">⚡ Approve &amp; Schedule Campaigns</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── Hex Map Generation ──
+(function(){
+  const svg = document.getElementById('hexSvg');
+  const w = 900, h = 350, size = 16;
+  const colors = ['#00d4aa','#2ecc71','#87d068','#b7d068','#f1c40f','#ffb347','#ff9f43','#ff6b6b','#e74c3c','#c0392b'];
+  function hex(cx, cy, s){
+    let pts = [];
+    for(let i=0;i<6;i++){let a=Math.PI/180*(60*i-30);pts.push([cx+s*Math.cos(a),cy+s*Math.sin(a)])}
+    return pts.map(p=>p.join(',')).join(' ');
+  }
+  const clusters = [
+    {cx:560,cy:130,spread:150,count:55,bias:0.68},   // Dallas core
+    {cx:620,cy:90,spread:80,count:25,bias:0.5},       // Plano
+    {cx:170,cy:170,spread:130,count:40,bias:0.32},    // Fort Worth
+    {cx:380,cy:240,spread:100,count:30,bias:0.48},    // Arlington
+    {cx:700,cy:200,spread:80,count:22,bias:0.58},     // Mesquite
+    {cx:300,cy:75,spread:100,count:22,bias:0.22},     // Denton
+    {cx:440,cy:180,spread:70,count:20,bias:0.42},     // Irving
+    {cx:500,cy:280,spread:60,count:15,bias:0.35},     // fill
+    {cx:260,cy:240,spread:60,count:12,bias:0.28},     // fill
+    {cx:480,cy:100,spread:50,count:12,bias:0.55},     // fill
+  ];
+  const placed = new Set();
+  clusters.forEach(cl=>{
+    for(let i=0;i<cl.count;i++){
+      const angle = Math.random()*Math.PI*2;
+      const dist = Math.random()*cl.spread;
+      const cx = cl.cx+Math.cos(angle)*dist;
+      const cy = cl.cy+Math.sin(angle)*dist;
+      const col = Math.round(cx/(size*1.75));
+      const row = Math.round(cy/(size*1.5));
+      const key = col+','+row;
+      if(placed.has(key)) continue;
+      placed.add(key);
+      const hx = col*size*1.75;
+      const hy = row*size*1.5+(col%2?size*.75:0);
+      if(hx<10||hx>w-10||hy<10||hy>h-10) continue;
+      const risk = Math.min(1,Math.max(0,cl.bias+Math.random()*.4-.2));
+      const ci = Math.floor(risk*(colors.length-1));
+      const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+      poly.setAttribute('points',hex(hx,hy,size));
+      poly.setAttribute('fill',colors[ci]);
+      poly.setAttribute('opacity',(0.45+risk*0.45).toFixed(2));
+      poly.setAttribute('stroke','rgba(255,255,255,0.06)');
+      poly.setAttribute('stroke-width','1');
+      poly.style.transition='all .4s ease';
+      poly.dataset.risk = risk;
+      poly.dataset.ci = ci;
+      poly.classList.add('hex-cell');
+      poly.addEventListener('mouseenter',()=>{poly.setAttribute('opacity','1');poly.setAttribute('stroke','rgba(255,255,255,0.25)');poly.setAttribute('stroke-width','2')});
+      poly.addEventListener('mouseleave',()=>{poly.setAttribute('opacity',(0.45+risk*0.45).toFixed(2));poly.setAttribute('stroke','rgba(255,255,255,0.06)');poly.setAttribute('stroke-width','1')});
+      svg.appendChild(poly);
+    }
+  });
+  // Subtle grid
+  for(let i=0;i<8;i++){
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',0);line.setAttribute('x2',w);
+    line.setAttribute('y1',i*h/7);line.setAttribute('y2',i*h/7);
+    line.setAttribute('stroke','rgba(255,255,255,.02)');
+    svg.insertBefore(line,svg.firstChild);
+  }
+  for(let i=0;i<10;i++){
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',i*w/9);line.setAttribute('x2',i*w/9);
+    line.setAttribute('y1',0);line.setAttribute('y2',h);
+    line.setAttribute('stroke','rgba(255,255,255,.02)');
+    svg.insertBefore(line,svg.firstChild);
+  }
+})();
+
+// ── Triage Table ──
+const patients = [
+  {id:'TX-30158',risk:94,cond:'COPD Stage IV (Very Severe)',delta:'+2.41',deltaNum:2.41,consent:'A',tier:'Critical',data:'full'},
+  {id:'TX-30221',risk:89,cond:'COPD Stage III (Severe)',delta:'+1.87',deltaNum:1.87,consent:'A',tier:'Critical',data:'full'},
+  {id:'TX-30087',risk:82,cond:'COPD Stage III (Severe)',delta:'+1.63',deltaNum:1.63,consent:'B',tier:'High',data:'standard'},
+  {id:'TX-30445',risk:76,cond:'COPD Stage II (Moderate)',delta:'+1.28',deltaNum:1.28,consent:'A',tier:'High',data:'full'},
+  {id:'TX-30312',risk:71,cond:'COPD Stage III (Severe)',delta:'+0.94',deltaNum:0.94,consent:'A',tier:'Moderate',data:'standard'},
+  {id:'TX-30519',risk:65,cond:'COPD Stage II (Moderate)',delta:'+0.72',deltaNum:0.72,consent:'B',tier:'Moderate',data:'climate'},
+  {id:'TX-30603',risk:58,cond:'COPD Stage I (Mild)',delta:'+0.53',deltaNum:0.53,consent:'A',tier:'Moderate',data:'standard'},
+];
+
+function riskColor(r){ return r>=85?'var(--coral)':r>=70?'var(--amber)':'var(--blue)' }
+function tierBadge(t){ return t==='Critical'?'badge-critical':t==='High'?'badge-high':'badge-moderate' }
+function dataBadge(d){
+  if(d==='full') return '<span class="badge-data badge-data-full">🟢 Full</span>';
+  if(d==='standard') return '<span class="badge-data badge-data-standard">🟡 Standard</span>';
+  return '<span class="badge-data badge-data-climate">🔴 Climate-Only</span>';
+}
+
+function renderTable(pList){
+  const tbody = document.getElementById('triageBody');
+  tbody.innerHTML = '';
+  pList.forEach(p=>{
+    const color = riskColor(p.risk);
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td style="font-weight:600;color:var(--teal)"><a href="patient-detail.html#${p.id}" style="color:var(--teal)">${p.id}</a></td>
+      <td><span class="risk-bar"><span class="risk-bar-fill" style="width:${p.risk}%;background:${color}"></span></span><span class="risk-val" style="font-weight:600">${p.risk}%</span></td>
+      <td>${p.cond}</td>
+      <td style="font-weight:600;color:${color}">${typeof p.delta==='number'?'+'+p.delta.toFixed(2):p.delta}</td>
+      <td>${dataBadge(p.data)}</td>
+      <td><span class="badge ${p.consent==='A'?'badge-a':'badge-b'}">Track ${p.consent}</span></td>
+      <td><span class="badge ${tierBadge(p.tier)}">${p.tier}</span></td>
+      <td><a href="patient-detail.html#${p.id}" class="btn-sm">Review</a></td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+renderTable(patients);
+
+// ── SHAP Chart ──
+const shapCtx = document.getElementById('shapChart');
+const shapChart = new Chart(shapCtx, {
+  type:'bar',
+  data:{
+    labels:['AQI Concentration','Heat Index','COPD Severity Stage','Ozone Level','Smoking Pack-Years','Medication Adherence','Prior Exacerbations','Indoor Shielding'],
+    datasets:[{
+      data:[0.31, 0.24, 0.22, 0.18, 0.12, -0.08, 0.09, -0.14],
+      backgroundColor: ctx => { const v = ctx.raw; return v>=0 ? 'rgba(255,107,107,0.7)' : 'rgba(0,212,170,0.7)' },
+      borderColor: ctx => { const v = ctx.raw; return v>=0 ? '#ff6b6b' : '#00d4aa' },
+      borderWidth:1,
+      borderRadius:4,
+      barPercentage: 0.7,
+    }]
+  },
+  options:{
+    indexAxis:'y',
+    responsive:true,
+    maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:'rgba(17,24,39,.92)',
+        borderColor:'rgba(255,255,255,.08)',
+        borderWidth:1,
+        titleFont:{family:'Inter',weight:'600'},
+        bodyFont:{family:'Inter'},
+        callbacks:{label:ctx=>`SHAP Value: ${ctx.raw>0?'+':''}${ctx.raw}`}
+      }
+    },
+    scales:{
+      x:{
+        grid:{color:'rgba(255,255,255,.04)'},
+        ticks:{color:'#8892a4',font:{size:11,family:'Inter'}},
+        title:{display:true,text:'← Reduces Risk          Increases Risk →',color:'#5a6478',font:{size:10,family:'Inter'}}
+      },
+      y:{
+        grid:{display:false},
+        ticks:{color:'#c8cdd5',font:{size:11,family:'Inter'}}
+      }
+    }
+  }
+});
+
+// ── Approve Campaigns ──
+function approveCampaigns(btn){
+  btn.textContent = '✓ Campaigns Scheduled';
+  btn.style.background = 'rgba(0,212,170,.15)';
+  btn.style.color = 'var(--teal)';
+  btn.style.border = '1px solid rgba(0,212,170,.3)';
+}
+
+// ── Live Simulation ──
+let simRan = false;
+function runSimulation(){
+  if(simRan) return;
+  simRan = true;
+  const btn = document.getElementById('btnSimulate');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="pulse">⏳</span> Simulating…';
+
+  // 1. Animate AQI from 207 → 258
+  const aqiEl = document.getElementById('envAqi');
+  let aqiVal = 207;
+  const aqiTarget = 258;
+  const aqiInterval = setInterval(()=>{
+    aqiVal += 2;
+    if(aqiVal >= aqiTarget){
+      aqiVal = aqiTarget;
+      clearInterval(aqiInterval);
+    }
+    aqiEl.textContent = aqiVal + (aqiVal >= 250 ? ' — Very Unhealthy' : ' — Unhealthy');
+    aqiEl.classList.remove('danger');
+    aqiEl.classList.add('danger');
+  }, 80);
+
+  // 2. Animate hex map — shift colors hotter
+  setTimeout(()=>{
+    const hexCells = document.querySelectorAll('.hex-cell');
+    const colors = ['#00d4aa','#2ecc71','#87d068','#b7d068','#f1c40f','#ffb347','#ff9f43','#ff6b6b','#e74c3c','#c0392b'];
+    hexCells.forEach(poly=>{
+      const oldRisk = parseFloat(poly.dataset.risk);
+      const newRisk = Math.min(1, oldRisk + 0.12 + Math.random()*0.12);
+      const ci = Math.floor(newRisk*(colors.length-1));
+      poly.setAttribute('fill', colors[ci]);
+      poly.setAttribute('opacity', (0.5+newRisk*0.45).toFixed(2));
+      poly.dataset.risk = newRisk;
+    });
+  }, 500);
+
+  // 3. Animate patient risk scores upward
+  const increments = [6, 5, 8, 4, 7, 3, 5];
+  setTimeout(()=>{
+    patients.forEach((p,i)=>{
+      p.risk = Math.min(99, p.risk + increments[i]);
+      p.deltaNum = p.deltaNum + (increments[i]*0.08);
+      p.delta = p.deltaNum;
+      // re-classify tiers
+      if(p.risk >= 85) p.tier = 'Critical';
+      else if(p.risk >= 70) p.tier = 'High';
+      else p.tier = 'Moderate';
+    });
+    // sort by risk descending
+    patients.sort((a,b)=>b.risk-a.risk);
+    renderTable(patients);
+
+    // Animate risk bar fills
+    setTimeout(()=>{
+      document.querySelectorAll('.risk-bar-fill').forEach(el=>{
+        el.style.transition = 'width .8s ease, background .8s ease';
+      });
+    }, 50);
+  }, 1200);
+
+  // 4. Show toast
+  setTimeout(()=>{
+    const toast = document.getElementById('simToast');
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'), 5500);
+  }, 2200);
+
+  // 5. Add urgent campaign
+  setTimeout(()=>{
+    const campaignBody = document.getElementById('campaignBody');
+    const approveBtn = document.getElementById('btnApprove');
+    const urgentDiv = document.createElement('div');
+    urgentDiv.className = 'campaign-item urgent fade-in';
+    urgentDiv.innerHTML = `
+      <div class="campaign-info">
+        <h5>🚨 URGENT: AQI Escalation — Immediate COPD Alert</h5>
+        <p>SMS + IVR · Auto-generated · All COPD patients · Track A</p>
+      </div>
+      <div class="campaign-count"><span class="badge badge-critical">URGENT</span></div>
+    `;
+    campaignBody.insertBefore(urgentDiv, approveBtn);
+  }, 2600);
+
+  // 6. Update sidebar numbers
+  setTimeout(()=>{
+    document.getElementById('counter-highrisk').textContent = '165';
+    document.getElementById('constrainer-text').textContent = '165 / 2,847 patients';
+    document.getElementById('constrainerBar').style.width = '5.8%';
+  }, 2000);
+
+  // 7. Reset button
+  setTimeout(()=>{
+    btn.innerHTML = '<span>✓</span> Simulation Complete';
+    btn.style.borderColor = 'rgba(0,212,170,.3)';
+    btn.style.color = 'var(--teal)';
+    btn.style.background = 'rgba(0,212,170,.1)';
+  }, 3200);
+}
+</script>
+</body>
+</html>
