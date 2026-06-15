@@ -1,0 +1,83 @@
+{
+  "patient": {
+    "id": "PT-0001",
+    "name": "Maria Hernandez",
+    "birth_date": "1958-04-12",
+    "postal_code": "75218",
+    "h3_cell": "8726cb935ffffff",
+    "indoor": true,
+    "indoor_confidence": 0.996,
+    "shielding_coefficient": 0.518,
+    "consent_track": "A"
+  },
+  "forecast": {
+    "respiratory": 0.62,
+    "cardiovascular": 0.41,
+    "metabolic": 0.48
+  },
+  "baseline": {
+    "respiratory": 0.12,
+    "cardiovascular": 0.1,
+    "metabolic": 0.08
+  },
+  "volatility_delta": {
+    "respiratory": 0.762,
+    "cardiovascular": 0.473,
+    "metabolic": 0.61
+  },
+  "combined_delta": 0.587,
+  "firing_head": "respiratory",
+  "horizon_hours": 72,
+  "drivers": [
+    {
+      "label": "COPD severity (GOLD)",
+      "stream": "static",
+      "value": 1.0,
+      "direction": "risk"
+    },
+    {
+      "label": "Smoking pack-years",
+      "stream": "static",
+      "value": 0.55,
+      "direction": "risk"
+    },
+    {
+      "label": "Prior ER visits (12 mo)",
+      "stream": "static",
+      "value": 0.533,
+      "direction": "risk"
+    },
+    {
+      "label": "PM2.5",
+      "stream": "environmental",
+      "value": 0.365,
+      "direction": "risk"
+    },
+    {
+      "label": "SpO2 (pulse-ox)",
+      "stream": "clinical",
+      "value": 0.276,
+      "direction": "risk"
+    },
+    {
+      "label": "Medication adherence",
+      "stream": "static",
+      "value": 0.272,
+      "direction": "risk"
+    },
+    {
+      "label": "Ozone (O₃)",
+      "stream": "environmental",
+      "value": 0.265,
+      "direction": "risk"
+    },
+    {
+      "label": "AQI composite",
+      "stream": "environmental",
+      "value": 0.231,
+      "direction": "risk"
+    }
+  ],
+  "convergence_delta": [],
+  "engine": "Clinical priors × patient deviation"
+}
