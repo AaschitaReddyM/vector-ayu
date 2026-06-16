@@ -323,7 +323,7 @@ for label, mask_func in [
 
 # ── Save results ──
 summary = {
-    "study": "ClimaHealth Ablation Study — Option 2 (Fully Synthetic)",
+    "study": "VAYU Ablation Study — Option 2 (Fully Synthetic)",
     "n_patients": N_PATIENTS,
     "n_observations": len(obs),
     "exacerbation_rate": float(exac_rate),

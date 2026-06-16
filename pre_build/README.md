@@ -1,4 +1,4 @@
-# ClimaHealth — Backend Pipeline Core (`pre_build`)
+# VAYU — Backend Pipeline Core (`pre_build`)
 
 This directory houses the 7-stage Python pipeline that ingests EHR patient profiles, maps them spatiotemporally to environmental exposures, runs risk predictions, triage gates notifications, calculates explainability drivers, and triggers proactive outreach.
 

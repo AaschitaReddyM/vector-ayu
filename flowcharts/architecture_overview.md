@@ -1,23 +1,23 @@
-# ClimaHealth Architecture Overview
+# VAYU Architecture Overview
 
 > [!NOTE]
-> This document outlines the architecture and pipeline of the ClimaHealth system based on the `pre_build` implementation and version 1 web interface.
+> This document outlines the architecture and pipeline of the VAYU system based on the `pre_build` implementation and version 1 web interface.
 
 ## System Architecture
 
-ClimaHealth is an end-to-end predictive healthcare pipeline that integrates Electronic Health Record (EHR) data with environmental and climate risk models to forecast acute health events.
+VAYU is an end-to-end predictive healthcare pipeline that integrates Electronic Health Record (EHR) data with environmental and climate risk models to forecast acute health events.
 
 ```mermaid
 flowchart TD
-    EHR[(EHR System)] -->|FHIR/SMART| A(Data Ingestion)
-    A --> B(Spatiotemporal Mapping)
-    Env[(Environmental APIs)] --> C(Exposure Attenuation)
+    EHR[(EHR System)] -->|FHIR/SMART| A("Stage 1: Data Ingestion")
+    A --> B("Stage 2: Spatiotemporal Graph (H3 Hex Indexing)")
+    Env[(Environmental APIs)] --> C("Stage 3: Exposure Attenuation (Shielding & Indoor Proxy)")
     B --> C
-    C --> D{Multi-Task TFT Model}
-    D -->|Respiratory| E(Triage Constrainer)
+    C --> D{"Stage 4: Deep Forecasting (Multi-Task TFT Model)"}
+    D -->|Respiratory| E("Stage 5: Triage Constrainer (Volatility Delta & Token Bucket)")
     D -->|Cardiovascular| E
     D -->|Metabolic| E
-    E -->|Accepted| F(Endpoint Outreach & XAI)
+    E -->|Accepted| F("Stage 6: XAI Explanation Engine (Integrated Gradients)")
     F -->|Track A: Auto| G(SMS Alert)
     F -->|Track B: Manual| H(Call Queue)
     F -->|Write-back| EHR

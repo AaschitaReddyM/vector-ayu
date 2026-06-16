@@ -1,4 +1,4 @@
-# ClimaHealth — Complete Codebase Analysis & Progress Walkthrough
+# VAYU — Complete Codebase Analysis & Progress Walkthrough
 
 > [!NOTE]
 > This document covers **how the system works**, **what's implemented vs placeholder**, **remaining tasks**, **architecture-level design gaps**, and our **TFT model training results**.
@@ -48,14 +48,14 @@ The backend processes patient data through seven sequential stages:
 
 ```mermaid
 flowchart TD
-    EHR[(EHR System)] -->|FHIR/SMART| A["① Data Ingestion<br/>fhir_client.py, smart_oauth.py"]
-    A --> B["② Spatiotemporal Graph<br/>h3_ingestion.py, texas_zip_centroids.py"]
-    ENV[(Environmental APIs)] --> C["③ Exposure Attenuation<br/>attenuation.py, indoor_proxy.py, shielding_coefficient.py"]
+    EHR[(EHR System)] -->|FHIR/SMART| A["Stage 1: Data Ingestion<br/>fhir_client.py, smart_oauth.py"]
+    A --> B["Stage 2: Spatiotemporal Graph (H3 Hex Indexing)<br/>h3_ingestion.py, texas_zip_centroids.py"]
+    ENV[(Environmental APIs)] --> C["Stage 3: Exposure Attenuation (Shielding & Indoor Proxy)<br/>attenuation.py, indoor_proxy.py, shielding_coefficient.py"]
     B --> C
-    C --> D["④ Multi-Task TFT Model<br/>tft_skeleton.py, multitask_loss.py, catboost_fallback.py"]
-    D --> E["⑤ Triage Constrainer<br/>token_bucket.py, volatility_delta.py"]
-    E --> F["⑥ XAI Breakdown<br/>attributions.py, channel_labels.py, export_for_dashboard.py"]
-    F --> G["⑦ Endpoint Outreach<br/>dual_track.py, sms_template.py, progress_note.py"]
+    C --> D["Stage 4: Deep Forecasting (Multi-Task TFT Model)<br/>tft_skeleton.py, multitask_loss.py, catboost_fallback.py"]
+    D --> E["Stage 5: Triage Constrainer (Volatility Delta & Token Bucket)<br/>token_bucket.py, volatility_delta.py"]
+    E --> F["Stage 6: XAI Explanation Engine (Integrated Gradients)<br/>attributions.py, channel_labels.py, export_for_dashboard.py"]
+    F --> G["Stage 7: Endpoint Outreach & EHR Write-Back<br/>dual_track.py, sms_template.py, progress_note.py"]
     G -->|Track A| SMS(SMS Alert)
     G -->|Track B| QUEUE(Manual Call Queue)
     G -->|Write-back| EHR
@@ -112,7 +112,7 @@ All pages are **standalone HTML with inline CSS/JS**. They are visually polished
 | [dashboard.html](file:///Users/manid/private/climahealth-1/version%201/dashboard.html) | 72-hour provider triage dashboard | H3 hex map (SVG), 7 patients, SHAP chart, campaign queue, **live simulation button** |
 | [patient-detail.html](file:///Users/manid/private/climahealth-1/version%201/patient-detail.html) | Patient deep-dive (TX-30158) | Risk ring, medications, XAI attributions, 72-hr trajectory, SMS preview (en/es) |
 | [outreach.html](file:///Users/manid/private/climahealth-1/version%201/outreach.html) | Campaign approval workflow | 5-step stepper, phone mockup, **trilingual** (en/es/vi), schedule selector |
-| [consumer.html](file:///Users/manid/private/climahealth-1/version%201/consumer.html) | Patient-facing mobile app | iPhone frame, ClimaHealth Index ring (72/100), behavioral nudge cards, AQI forecast |
+| [consumer.html](file:///Users/manid/private/climahealth-1/version%201/consumer.html) | Patient-facing mobile app | iPhone frame, VAYU Index ring (72/100), behavioral nudge cards, AQI forecast |
 | [analytics.html](file:///Users/manid/private/climahealth-1/version%201/analytics.html) | Population health intelligence | ED visits prevented, intervention charts, PMPM revenue model, **interactive ROI calculator** |
 | [plan.html](file:///Users/manid/private/climahealth-1/version%201/plan.html) | Buildathon plan & spec | 12+ sections, demo script, success metrics checklist, timeline |
 

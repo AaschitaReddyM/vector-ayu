@@ -64,14 +64,14 @@ def build_progress_note(
         "date": approved_at.isoformat(),
         "author": [{"reference": f"Practitioner/{clinician_id}"}],
         "description": (
-            f"ClimaHealth proactive outreach — {summary.head} risk "
+            f"VAYU proactive outreach — {summary.head} risk "
             f"Δ={summary.volatility_delta:.2f} over {summary.horizon_hours}h horizon"
         ),
         "content": [{
             "attachment": {
                 "contentType": "text/plain",
                 "data": encoded,
-                "title": "ClimaHealth Preventive Outreach Note",
+                "title": "VAYU Preventive Outreach Note",
             },
         }],
         "context": {
@@ -94,7 +94,7 @@ def _render_narrative(
     drivers = "\n  ".join(f"• {d}" for d in summary.top_drivers) or "  (none recorded)"
     recs = "\n  ".join(f"• {r}" for r in recommendations) or "  (none recorded)"
     return (
-        "ClimaHealth Proactive Preventive Outreach\n"
+        "VAYU Proactive Preventive Outreach\n"
         "=========================================\n"
         f"Approved by: Practitioner/{clinician_id}\n"
         f"Approved at: {approved_at.isoformat()}\n"

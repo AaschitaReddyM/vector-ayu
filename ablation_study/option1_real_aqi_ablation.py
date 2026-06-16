@@ -696,7 +696,7 @@ print(f"  ✓ Saved: {plot2_path}")
 # ╚══════════════════════════════════════════════════════════════════╝
 
 summary = {
-    "study": "ClimaHealth Feature Ablation Study — Option 1",
+    "study": "VAYU Feature Ablation Study — Option 1",
     "data_source": "Real EPA AQI statistics (Dallas County, TX 2023-2024) + Synthetic Clinical",
     "n_patients": N_PATIENTS,
     "n_observations": len(obs),
@@ -750,7 +750,7 @@ print(f"""
   exacerbation prediction by +{delta:.4f} AUC points overall.
   
   During extreme weather events (AQI>150, extreme heat), the 
-  improvement is substantially larger, validating the ClimaHealth
+  improvement is substantially larger, validating the VAYU
   hypothesis that environmental intelligence adds disproportionate
   value during the moments hospitals need it most.
   

@@ -5,11 +5,11 @@ The EHR launches our app inside its chart frame (the `iss` and `launch`
 params arrive on the launch URL). We then do the standard SMART App Launch
 OAuth 2.0 / PKCE dance:
 
-    EHR  ──(launch URL with iss, launch)──▶  ClimaHealth Launch endpoint
-    ClimaHealth ──(authorize?response_type=code&...)──▶  EHR Auth Server
-    EHR Auth Server ──(redirect code)──▶  ClimaHealth Redirect URI
-    ClimaHealth ──(POST token grant)──▶  EHR Token Endpoint
-    EHR Token Endpoint ──(access_token + id_token + patient + scope)──▶  ClimaHealth
+    EHR  ──(launch URL with iss, launch)──▶  VAYU Launch endpoint
+    VAYU ──(authorize?response_type=code&...)──▶  EHR Auth Server
+    EHR Auth Server ──(redirect code)──▶  VAYU Redirect URI
+    VAYU ──(POST token grant)──▶  EHR Token Endpoint
+    EHR Token Endpoint ──(access_token + id_token + patient + scope)──▶  VAYU
 
 This module ships the *URL builders and an in-memory token store* so the
 buildathon team can wire it to live sandboxes (e.g. launch.smarthealthit.org

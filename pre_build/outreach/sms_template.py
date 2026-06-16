@@ -44,8 +44,8 @@ _NUDGE_BY_HEAD = {
 }
 
 _HEADERS = {
-    "en": "Hi {name} — your ClimaHealth Index just shifted because of {anomaly} near {city} over the next {hrs} hours.",
-    "es": "Hola {name} — tu Índice ClimaHealth cambió por {anomaly} cerca de {city} durante las próximas {hrs} horas.",
+    "en": "Hi {name} — your VAYU Index just shifted because of {anomaly} near {city} over the next {hrs} hours.",
+    "es": "Hola {name} — tu Índice VAYU cambió por {anomaly} cerca de {city} durante las próximas {hrs} horas.",
 }
 
 _FOOTER = {

@@ -1,6 +1,6 @@
-# ClimaHealth — Improvements for Later (Post-Buildathon Roadmap)
+# VAYU — Improvements for Later (Post-Buildathon Roadmap)
 
-This document outlines high-impact technical, clinical, and architectural improvements to transition ClimaHealth from a high-fidelity prototype to a production-grade clinical triage platform.
+This document outlines high-impact technical, clinical, and architectural improvements to transition VAYU from a high-fidelity prototype to a production-grade clinical triage platform.
 
 ---
 
@@ -48,7 +48,7 @@ This document outlines high-impact technical, clinical, and architectural improv
 
 ### 3.2 CDS Hooks Integration
 * **Current**: Standalone provider dashboard.
-* **Later**: Integrate ClimaHealth alerts directly into the EHR chart using **CDS Hooks** (e.g., a `patient-view` hook that displays the ClimaHealth climate risk banner directly inside Epic/Cerner when a clinician opens a patient's chart, suggesting preventative inhaler updates).
+* **Later**: Integrate VAYU alerts directly into the EHR chart using **CDS Hooks** (e.g., a `patient-view` hook that displays the VAYU climate risk banner directly inside Epic/Cerner when a clinician opens a patient's chart, suggesting preventative inhaler updates).
 
 ---
 

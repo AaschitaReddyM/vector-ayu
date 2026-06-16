@@ -1,4 +1,4 @@
-# Buildathon Dallas 2026 — Credit Strategy for ClimaHealth
+# Buildathon Dallas 2026 — Credit Strategy for VAYU
 
 > [!NOTE]
 > Mapping $3,025+ in partner credits to your remaining tasks, with a realistic 18-hour execution plan.
@@ -7,20 +7,20 @@
 
 ## 1. Partner Credits — What Each One Does
 
-| Partner | Credits | What It Is | Relevance to ClimaHealth |
+| Partner | Credits | What It Is | Relevance to VAYU |
 |---------|---------|------------|--------------------------|
 | **Tavily** | $2,000 | AI-optimized web search API (search, extract, crawl). Designed for RAG & AI agents. | ⭐⭐⭐ **HIGH** — Can power real-time EPA/weather data retrieval for your environmental pipeline |
 | **Lovable** | $100 | AI full-stack web app builder (generates React + Supabase apps from prompts) | ⭐⭐⭐ **HIGH** — Can rebuild your frontend as a real React app with Supabase DB in hours |
 | **Featherless AI** | $25 | Serverless open-source LLM inference (OpenAI-compatible API, thousands of models) | ⭐⭐⭐ **HIGH** — Can power AI-generated SMS outreach (replace your template engine with an LLM agent) |
 | **CallFort** | $20 | Voice AI / telephony API (likely similar to Retell/Vapi) | ⭐⭐ **MEDIUM** — Can power Track B manual call queue with AI voice agent for patient outreach |
-| **Geodo** | $300 | B2B sales GTM platform (outbound intelligence, pipeline, deal coaching) | ⭐ **LOW** — Not directly relevant to ClimaHealth's healthcare pipeline |
+| **Geodo** | $300 | B2B sales GTM platform (outbound intelligence, pipeline, deal coaching) | ⭐ **LOW** — Not directly relevant to VAYU's healthcare pipeline |
 | **GiraffyReach** | $80 | Job application automation (resume, outreach to recruiters) | ❌ **NONE** — Not applicable |
 | **Pipecode** | $500 | Data engineering interview prep platform | ❌ **NONE** — Not applicable |
 | **Just Videos** | Unlimited | AI video generation (multi-model, short-form video creation) | ⭐⭐ **MEDIUM** — Can create a polished demo/pitch video for judging |
 
 ---
 
-## 2. Credits → ClimaHealth Task Mapping
+## 2. Credits → VAYU Task Mapping
 
 ### ⭐ High-Impact Credits (Use These First)
 
@@ -107,7 +107,7 @@ If CallFort is a voice AI platform, it can power your Track B (manual call queue
 
 ```mermaid
 gantt
-    title ClimaHealth — 18-Hour Buildathon Execution
+    title VAYU — 18-Hour Buildathon Execution
     dateFormat HH:mm
     axisFormat %H:%M
 
@@ -228,4 +228,4 @@ gantt
 | **Pipecode** ($500) | ❌ Skip | $0 | $500 unused |
 
 > [!IMPORTANT]
-> **Effective credits for ClimaHealth: ~$2,145 out of $3,025** (71%). The remaining $880 (Geodo, GiraffyReach, Pipecode) are irrelevant to your healthcare pipeline.
+> **Effective credits for VAYU: ~$2,145 out of $3,025** (71%). The remaining $880 (Geodo, GiraffyReach, Pipecode) are irrelevant to your healthcare pipeline.
