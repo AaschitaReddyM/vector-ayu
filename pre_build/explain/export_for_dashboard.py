@@ -310,11 +310,20 @@ def main(engine: str = "clinical-priors") -> None:
     clinical_x = torch.from_numpy(clinical_np)
     environmental_x = torch.from_numpy(effective_np)
 
-    # ── TFT forecast (untrained skeleton just provides shapes) ────────────
+    # ── TFT forecast ──────────────────────────────────────────────────────
     model = TFTSkeleton(cfg).eval()
+    checkpoint_path = Path(__file__).resolve().parent.parent / "model" / "tft_trained.pt"
+    has_checkpoint = checkpoint_path.exists()
+    if has_checkpoint:
+        model.load_state_dict(torch.load(checkpoint_path, map_location="cpu", weights_only=True))
+        print("  ✓ loaded trained weights from tft_trained.pt")
+
     if engine == "ig":
-        print("  --engine ig: calibrating model on synthetic data first...")
-        _calibrate_model(model, cfg, rng)
+        if has_checkpoint:
+            print("  --engine ig: using pre-trained weights from tft_trained.pt")
+        else:
+            print("  --engine ig: checkpoint not found. Calibrating model on synthetic data first...")
+            _calibrate_model(model, cfg, rng)
     with torch.no_grad():
         logits = model(static_x, clinical_x, environmental_x)
     # Forecast probabilities: clinical-priors path overrides with deterministic

@@ -119,6 +119,12 @@ def run() -> None:
     cfg = TFTConfig(horizon_hours=horizon, environmental_input_dim=n_env)
     torch.manual_seed(0)
     model = TFTSkeleton(cfg).eval()
+    checkpoint_path = Path(__file__).resolve().parent / "model" / "tft_trained.pt"
+    if checkpoint_path.exists():
+        model.load_state_dict(torch.load(checkpoint_path, map_location="cpu", weights_only=True))
+        print("  ✓ loaded trained weights from tft_trained.pt")
+    else:
+        print("  ⚠️ using random weights (run train_tft.py to train the model)")
     static_x = torch.from_numpy(rng.normal(size=(1, cfg.static_input_dim)).astype(np.float32))
     clin_x = torch.from_numpy(rng.normal(size=(1, horizon, cfg.clinical_input_dim)).astype(np.float32))
     env_x = torch.from_numpy(effective)

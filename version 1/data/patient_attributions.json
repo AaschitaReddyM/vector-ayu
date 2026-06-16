@@ -11,9 +11,9 @@
     "consent_track": "A"
   },
   "forecast": {
-    "respiratory": 0.62,
-    "cardiovascular": 0.41,
-    "metabolic": 0.48
+    "respiratory": 0.727,
+    "cardiovascular": 0.693,
+    "metabolic": 0.547
   },
   "baseline": {
     "respiratory": 0.12,
@@ -21,63 +21,65 @@
     "metabolic": 0.08
   },
   "volatility_delta": {
-    "respiratory": 0.762,
-    "cardiovascular": 0.473,
-    "metabolic": 0.61
+    "respiratory": 0.925,
+    "cardiovascular": 0.905,
+    "metabolic": 0.712
   },
-  "combined_delta": 0.587,
+  "combined_delta": 0.872,
   "firing_head": "respiratory",
   "horizon_hours": 72,
   "drivers": [
     {
-      "label": "COPD severity (GOLD)",
-      "stream": "static",
+      "label": "Ozone (O₃)",
+      "stream": "environmental",
       "value": 1.0,
-      "direction": "risk"
-    },
-    {
-      "label": "Smoking pack-years",
-      "stream": "static",
-      "value": 0.55,
-      "direction": "risk"
-    },
-    {
-      "label": "Prior ER visits (12 mo)",
-      "stream": "static",
-      "value": 0.533,
       "direction": "risk"
     },
     {
       "label": "PM2.5",
       "stream": "environmental",
-      "value": 0.365,
+      "value": 0.891,
       "direction": "risk"
     },
     {
       "label": "SpO2 (pulse-ox)",
       "stream": "clinical",
-      "value": 0.276,
-      "direction": "risk"
-    },
-    {
-      "label": "Medication adherence",
-      "stream": "static",
-      "value": 0.272,
-      "direction": "risk"
-    },
-    {
-      "label": "Ozone (O₃)",
-      "stream": "environmental",
-      "value": 0.265,
+      "value": 0.723,
       "direction": "risk"
     },
     {
       "label": "AQI composite",
       "stream": "environmental",
-      "value": 0.231,
+      "value": 0.643,
       "direction": "risk"
+    },
+    {
+      "label": "COPD severity (GOLD)",
+      "stream": "static",
+      "value": 0.145,
+      "direction": "risk"
+    },
+    {
+      "label": "Smoking pack-years",
+      "stream": "static",
+      "value": -0.137,
+      "direction": "protective"
+    },
+    {
+      "label": "Inhaler actuations",
+      "stream": "clinical",
+      "value": -0.128,
+      "direction": "protective"
+    },
+    {
+      "label": "HVAC density",
+      "stream": "static",
+      "value": -0.122,
+      "direction": "protective"
     }
   ],
-  "convergence_delta": [],
-  "engine": "Clinical priors × patient deviation"
+  "convergence_delta": [
+    -0.0024
+  ],
+  "engine": "Captum Integrated Gradients (n_steps=32)"
 }
