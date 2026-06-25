@@ -60,3 +60,33 @@ class RunPipelineResponse(BaseModel):
     triage_rank: Optional[int]
     outreach_track: str
     fhir_note_id: str
+
+
+# ── Stored-record schemas (history reads straight from Supabase) ────────────
+
+class RiskScoreRecord(BaseModel):
+    id: str
+    patient_id: str
+    probabilities: Optional[Dict[str, float]] = None
+    climate_volatility_delta: Optional[Dict[str, float]] = None
+    combined_delta: Optional[float] = None
+    top_head: Optional[str] = None
+    scored_at: Optional[str] = None
+    created_at: Optional[str] = None
+
+class TriageRecord(BaseModel):
+    id: str
+    patient_id: str
+    risk_total: Optional[float] = None
+    head: Optional[str] = None
+    status: str
+    triage_date: Optional[str] = None
+    created_at: Optional[str] = None
+
+class OutreachLogRecord(BaseModel):
+    id: str
+    patient_id: str
+    track: Optional[str] = None
+    message_content: Optional[str] = None
+    sent_at: Optional[str] = None
+    created_at: Optional[str] = None

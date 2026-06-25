@@ -3,6 +3,7 @@ import torch
 from pathlib import Path
 from datetime import datetime, timezone
 
+from pre_build.db import repository
 from pre_build.fhir.fhir_client import MockFhirClient
 from pre_build.fhir.progress_note import RiskSummary, build_progress_note
 from pre_build.spatial import build_zip_index, resolve_coordinate
@@ -28,6 +29,14 @@ CLIMATE_ANOMALY = "high ozone and PM2.5 from a wildfire plume drifting south"
 rng = np.random.default_rng(42)
 
 def get_all_patients():
+    """Patients from Supabase; falls back to the mock seed if the DB is
+    unreachable or empty (keeps the demo resilient)."""
+    try:
+        patients = repository.fetch_patients()
+        if patients:
+            return patients
+    except Exception as exc:  # pragma: no cover - demo resilience
+        print(f"[services] Supabase patient read failed, using mock: {exc}")
     return list(fhir_client.seed_patients.values())
 
 def get_patient_detail(patient_id: str):
@@ -85,12 +94,22 @@ def run_patient_pipeline(patient_id: str):
     # S7 Outreach
     consent = fresh_track_a(patient.id, signed_at=datetime.now(timezone.utc), policy_version="v3.2")
     plan = route_patient(consent)
+    outreach_message = f"Send 48h proactive {plan.outreach_channel.replace('_', ' ')} regarding {CLIMATE_ANOMALY}."
     note = build_progress_note(
         summary=RiskSummary(patient_id=patient.id, head=top_head, volatility_delta=combined, forecast_probability=probs[top_head], horizon_hours=72, top_drivers=driver_strings),
-        recommendations=[f"Send 48h proactive {plan.outreach_channel.replace('_', ' ')} regarding {CLIMATE_ANOMALY}."],
+        recommendations=[outreach_message],
         clinician_id="PR-7791"
     )
-    
+
+    # Persist this run to Supabase (best-effort — never break the response).
+    triage_status = "accepted" if rank is not None else "deferred"
+    try:
+        repository.save_risk_score(patient.id, probs, deltas, combined, top_head)
+        repository.save_triage_entry(patient.id, probs[top_head], top_head, triage_status)
+        repository.save_outreach_log(patient.id, plan.track.value, outreach_message)
+    except Exception as exc:  # pragma: no cover - demo resilience
+        print(f"[services] Supabase persist failed (continuing): {exc}")
+
     return {
         "patient": patient.__dict__ | {"display_name": patient.display_name},
         "h3_cell": hit.h3_cell,

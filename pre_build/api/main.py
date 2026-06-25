@@ -1,14 +1,16 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List
+from typing import List, Optional
 
 from pre_build.api.schemas import (
     PatientSchema, PatientDetailResponse, RunPipelineResponse,
-    TriageDecisionResponse
+    TriageDecisionResponse,
+    RiskScoreRecord, TriageRecord, OutreachLogRecord
 )
 from pre_build.api.services import (
     get_all_patients, get_patient_detail, run_patient_pipeline, get_triage_queue
 )
+from pre_build.db import repository
 
 app = FastAPI(title="VAYU Predictive Triage API", version="1.0.0")
 
@@ -90,3 +92,30 @@ async def risk_scores_alias(patient_id: str):
 async def triage_queue_alias():
     """Alias of GET /api/triage/queue."""
     return await triage_queue()
+
+
+# ---------------------------------------------------------------------------
+# History reads — pull stored records back out of Supabase for the frontend.
+# All are newest-first and accept an optional ?patient_id= filter.
+# ---------------------------------------------------------------------------
+
+@app.get("/history/risk-scores", response_model=List[RiskScoreRecord])
+async def history_risk_scores(patient_id: Optional[str] = None, limit: int = 50):
+    """Stored risk-score forecasts. Filter with ?patient_id=PT-0001."""
+    return repository.fetch_risk_scores(patient_id, limit)
+
+
+@app.get("/history/triage", response_model=List[TriageRecord])
+async def history_triage(
+    patient_id: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 50,
+):
+    """Persisted triage decisions. Filter by ?patient_id= and/or ?status=."""
+    return repository.fetch_triage_entries(patient_id, status, limit)
+
+
+@app.get("/history/outreach", response_model=List[OutreachLogRecord])
+async def history_outreach(patient_id: Optional[str] = None, limit: int = 50):
+    """Outreach audit log. Filter with ?patient_id=PT-0001."""
+    return repository.fetch_outreach_logs(patient_id, limit)
