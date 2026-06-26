@@ -54,7 +54,8 @@ function DashboardPage() {
             try {
               const ptToSimulate = top.length > 0 ? top[0].patient_id : "PT-0001";
               toast.loading("Running ML Pipeline...", { id: "sim" });
-              const res = await fetch(`/api/pipeline/run/${ptToSimulate}`, { method: "POST" });
+              const apiUrl = import.meta.env.VITE_API_URL || '';
+              const res = await fetch(`${apiUrl}/api/pipeline/run/${ptToSimulate}`, { method: "POST" });
               if (res.ok) {
                 await queryClient.invalidateQueries({ queryKey: ["risk_scores"] });
                 await queryClient.invalidateQueries({ queryKey: ["triage_queue"] });
