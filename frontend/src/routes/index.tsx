@@ -5,10 +5,10 @@ import { signIn } from "@/lib/auth";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "VAYU — SMART on FHIR Login" },
+      { title: "Vector-AYU — SMART on FHIR Login" },
       {
         name: "description",
-        content: "VAYU population-health intelligence: connect via SMART on FHIR.",
+        content: "Vector-AYU population-health intelligence: connect via SMART on FHIR.",
       },
     ],
   }),
@@ -29,7 +29,7 @@ const STEPS = [
     sub: "Provider DR-AMO-2847 · Scope: patient/*.read",
   },
   { label: "Loading FHIR Resources...", sub: "2,847 patients · 48,291 observations synced" },
-  { label: "Launching VAYU Layer...", sub: "Multi-Task AI · 3 prediction heads active" },
+  { label: "Launching Vector-AYU Layer...", sub: "Multi-Task AI · 3 prediction heads active" },
 ];
 
 function LoginPage() {
@@ -85,19 +85,12 @@ function LoginPage() {
       <div className="relative z-10 w-full max-w-[520px] animate-fade-up">
         {/* Hero */}
         <div className="text-center mb-10">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-gradient-to-br from-teal/20 to-blue/20 border border-teal/30 shadow-[0_8px_40px_rgba(0,212,170,0.2)]">
-            <svg viewBox="0 0 32 32" className="w-10 h-10" fill="none">
-              <circle cx="16" cy="16" r="14" stroke="url(#hg)" strokeWidth="2.5" />
-              <path d="M16 8v8l6 4" stroke="url(#hg)" strokeWidth="2.2" strokeLinecap="round" />
-              <defs>
-                <linearGradient id="hg" x1="0" y1="0" x2="32" y2="32">
-                  <stop stopColor="#00d4aa" />
-                  <stop offset="1" stopColor="#4ea8de" />
-                </linearGradient>
-              </defs>
-            </svg>
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-white border border-teal/30 shadow-[0_8px_40px_rgba(0,212,170,0.2)]">
+            <img src="/logo.png" alt="Vector-AYU Logo" className="w-16 h-16 object-contain" />
           </div>
-          <h1 className="text-[2.5rem] font-extrabold tracking-tight text-gradient-brand">VAYU</h1>
+          <h1 className="text-[2.5rem] font-extrabold tracking-tight text-gradient-brand">
+            Vector-AYU
+          </h1>
           <p className="text-text-dim mt-2 text-sm">Population Health Intelligence · DFW Metro</p>
         </div>
 
@@ -167,7 +160,7 @@ function LoginPage() {
         </div>
 
         <p className="text-center text-[0.72rem] text-text-muted mt-5">
-          VAYU Layer v2.4.1 · DFW Metro Region
+          Vector-AYU Layer v2.4.1 · DFW Metro Region
         </p>
       </div>
 

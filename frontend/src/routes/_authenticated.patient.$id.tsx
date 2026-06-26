@@ -11,7 +11,7 @@ import { MEDICATIONS, PATIENT_CONDITION, PATIENT_DRIVERS, RISK_TRAJECTORY } from
 
 export const Route = createFileRoute("/_authenticated/patient/$id")({
   head: ({ params }) => ({
-    meta: [{ title: `VAYU — Patient ${params.id}` }],
+    meta: [{ title: `Vector-AYU — Patient ${params.id}` }],
   }),
   loader: async ({ context, params }) => {
     await context.queryClient.ensureQueryData(patientQuery(params.id));
@@ -97,8 +97,10 @@ function PatientDetail() {
               e.preventDefault();
               try {
                 toast.loading("Running Pipeline...", { id: "sim2" });
-                const apiUrl = import.meta.env.VITE_API_URL || '';
-                const res = await fetch(`${apiUrl}/api/pipeline/run/${patient.id}`, { method: "POST" });
+                const apiUrl = import.meta.env.VITE_API_URL || "";
+                const res = await fetch(`${apiUrl}/api/pipeline/run/${patient.id}`, {
+                  method: "POST",
+                });
                 if (res.ok) {
                   const data = await res.json();
                   if (data.top_drivers && data.top_drivers.length > 0) {

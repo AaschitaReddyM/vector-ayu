@@ -78,13 +78,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "VAYU — Population Health Intelligence" },
+      { title: "Vector-AYU — Population Health Intelligence" },
       {
         name: "description",
         content:
-          "VAYU connects environmental data with EHR records to triage high-risk patients before climate-driven exacerbations.",
+          "Vector-AYU connects environmental data with EHR records to triage high-risk patients before climate-driven exacerbations.",
       },
-      { property: "og:title", content: "VAYU — Population Health Intelligence" },
+      { property: "og:title", content: "Vector-AYU — Population Health Intelligence" },
       {
         property: "og:description",
         content: "Triage high-risk patients before climate-driven exacerbations.",

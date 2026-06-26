@@ -17,18 +17,9 @@ export function TopBar() {
   return (
     <header className="glass sticky top-0 z-50 h-[62px] px-7 flex items-center justify-between">
       <Link to="/dashboard" className="flex items-center gap-2.5 font-bold text-[1.2rem]">
-        <svg viewBox="0 0 32 32" className="w-7 h-7" fill="none">
-          <circle cx="16" cy="16" r="14" stroke="url(#vg)" strokeWidth="2.5" />
-          <path d="M16 8v8l6 4" stroke="url(#vg)" strokeWidth="2" strokeLinecap="round" />
-          <defs>
-            <linearGradient id="vg" x1="0" y1="0" x2="32" y2="32">
-              <stop stopColor="#00d4aa" />
-              <stop offset="1" stopColor="#4ea8de" />
-            </linearGradient>
-          </defs>
-        </svg>
+        <img src="/logo.png" alt="Vector-AYU Logo" className="w-8 h-8 object-contain" />
         <span>
-          VAY<span className="text-teal">U</span>
+          Vector-AY<span className="text-teal">U</span>
         </span>
       </Link>
 

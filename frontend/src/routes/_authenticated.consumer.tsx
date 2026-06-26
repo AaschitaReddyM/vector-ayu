@@ -4,7 +4,7 @@ import { NudgeAlert } from "@/components/vayu/NudgeAlert";
 import { RiskRing } from "@/components/vayu/RiskRing";
 
 export const Route = createFileRoute("/_authenticated/consumer")({
-  head: () => ({ meta: [{ title: "VAYU — Consumer Health-Weather Score" }] }),
+  head: () => ({ meta: [{ title: "Vector-AYU — Consumer Health-Weather Score" }] }),
   component: ConsumerPage,
   errorComponent: ({ error }) => <div className="p-10 text-coral">{error.message}</div>,
   notFoundComponent: () => <div className="p-10">Not found</div>,
@@ -59,7 +59,7 @@ function ConsumerPage() {
         <div className="px-6 -mt-6 flex flex-col items-center">
           <div className="relative bg-card rounded-2xl p-6 border border-border shadow-[0_8px_30px_rgba(0,0,0,0.3)] w-full">
             <div className="flex justify-center mb-3">
-              <RiskRing value={0.72} size={180} color="#ffb347" label="VAYU Index" />
+              <RiskRing value={0.72} size={180} color="#ffb347" label="Vector-AYU Index" />
             </div>
             <div className="text-center">
               <div className="text-[0.78rem] font-semibold text-amber">

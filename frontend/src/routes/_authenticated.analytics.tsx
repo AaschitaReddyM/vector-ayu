@@ -19,7 +19,7 @@ import { StatCard } from "@/components/vayu/StatCard";
 import { ANALYTICS_INTERVENTIONS, ED_UTILIZATION, RISK_TIER_DIST } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
-  head: () => ({ meta: [{ title: "VAYU — Population Health Analytics" }] }),
+  head: () => ({ meta: [{ title: "Vector-AYU — Population Health Analytics" }] }),
   component: AnalyticsPage,
   errorComponent: ({ error }) => <div className="p-10 text-coral">{error.message}</div>,
   notFoundComponent: () => <div className="p-10">Not found</div>,
@@ -153,7 +153,7 @@ function AnalyticsPage() {
             <Line
               type="monotone"
               dataKey="actual"
-              name="Actual (with VAYU)"
+              name="Actual (with Vector-AYU)"
               stroke="#00d4aa"
               strokeWidth={2.5}
               dot={false}
@@ -171,7 +171,7 @@ function AnalyticsPage() {
         </p>
         <div className="grid md:grid-cols-3 gap-4">
           <RoiCard label="Projected Annual Savings" value="$4.2M" color="#00d4aa" />
-          <RoiCard label="VAYU Annual Cost" value="$510K" color="#4ea8de" />
+          <RoiCard label="Vector-AYU Annual Cost" value="$510K" color="#4ea8de" />
           <RoiCard label="Net ROI" value="723%" color="#ffb347" highlight />
         </div>
       </section>
