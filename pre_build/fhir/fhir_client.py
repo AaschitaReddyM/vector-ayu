@@ -109,15 +109,20 @@ class MockFhirClient:
 
 # ── Seed data ──────────────────────────────────────────────────────────────
 
-_DEFAULT_PATIENTS: list[Patient] = [
-    Patient(id="PT-0001", given_name="Maria", family_name="Hernandez",
-            birth_date="1958-04-12", gender="female", postal_code="75218",
-            primary_language="es"),
-    Patient(id="PT-0002", given_name="James", family_name="Allen",
-            birth_date="1949-09-30", gender="male", postal_code="76104"),
-    Patient(id="PT-0003", given_name="Linda", family_name="Nguyen",
-            birth_date="1962-01-18", gender="female", postal_code="75205"),
-]
+_FIRST = ["Eleanor", "Maria", "James", "Aisha", "Robert", "Lin", "Carlos", "Patricia", "Devon", "Yusuf", "Hannah", "Marcus"]
+_LAST = ["Vance", "Hernandez", "Okonkwo", "Patel", "Chen", "Rodriguez", "Williams", "Nguyen", "Brooks", "Al-Sayed", "Johnson", "Reyes"]
+
+_DEFAULT_PATIENTS: list[Patient] = []
+for i in range(12):
+    _DEFAULT_PATIENTS.append(Patient(
+        id=f"PT-{i+1:04d}",
+        given_name=_FIRST[i],
+        family_name=_LAST[i],
+        birth_date=f"19{40+i}-0{(i%9)+1}-1{i%9}",
+        gender="male" if i % 3 == 0 else "female",
+        postal_code=f"752{i:02d}",
+        primary_language="es" if i % 4 == 0 else "en"
+    ))
 
 _OBSERVATIONS_BY_PATIENT: dict[str, list[Observation]] = {
     "PT-0001": [

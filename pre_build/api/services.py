@@ -91,6 +91,14 @@ def run_patient_pipeline(patient_id: str):
     
     driver_strings = [f"Environmental ch={k} contribution={v:.3f}" for k, v in top_env] + [f"Static ch={k} contribution={v:.3f}" for k, v in top_static[:2]]
     
+    driver_objects = []
+    env_names = {0: "Ozone (O3)", 1: "PM2.5", 2: "Temperature", 3: "Humidity"}
+    for k, v in top_env:
+        name = env_names.get(k, f"Env Signal {k}")
+        driver_objects.append({"label": name, "stream": "environmental", "value": float(v)})
+    for k, v in top_static[:2]:
+        driver_objects.append({"label": f"Clinical Factor {k}", "stream": "static", "value": float(v)})
+
     # S7 Outreach
     consent = fresh_track_a(patient.id, signed_at=datetime.now(timezone.utc), policy_version="v3.2")
     plan = route_patient(consent)
@@ -121,7 +129,7 @@ def run_patient_pipeline(patient_id: str):
             "combined_delta": combined,
             "top_head": top_head
         },
-        "top_drivers": driver_strings,
+        "top_drivers": driver_objects,
         "triage_rank": rank,
         "outreach_track": plan.track.value,
         "fhir_note_id": note["id"]

@@ -50,13 +50,18 @@ class TriageDecisionResponse(BaseModel):
     capacity_used: int
     capacity_remaining: int
 
+class DriverSchema(BaseModel):
+    label: str
+    stream: str
+    value: float
+
 class RunPipelineResponse(BaseModel):
     patient: PatientSchema
     h3_cell: str
     indoor_proxy: bool
     shielding_coefficient: float
     risk: RiskForecast
-    top_drivers: List[str]
+    top_drivers: List[DriverSchema]
     triage_rank: Optional[int]
     outreach_track: str
     fhir_note_id: str
