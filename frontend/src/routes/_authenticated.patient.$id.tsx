@@ -97,7 +97,8 @@ function PatientDetail() {
               e.preventDefault();
               try {
                 toast.loading("Running Pipeline...", { id: "sim2" });
-                const res = await fetch(`/api/pipeline/run/${patient.id}`, { method: "POST" });
+                const apiUrl = import.meta.env.VITE_API_URL || '';
+                const res = await fetch(`${apiUrl}/api/pipeline/run/${patient.id}`, { method: "POST" });
                 if (res.ok) {
                   const data = await res.json();
                   if (data.top_drivers && data.top_drivers.length > 0) {
