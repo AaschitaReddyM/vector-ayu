@@ -17,7 +17,7 @@ export function TopBar() {
   return (
     <header className="glass sticky top-0 z-50 h-[62px] px-7 flex items-center justify-between">
       <Link to="/dashboard" className="flex items-center gap-2.5 font-bold text-[1.2rem]">
-        <img src="/logo.png" alt="Vector-AYU Logo" className="w-8 h-8 object-contain" />
+        <img src="/logo.jpg" alt="Vector-AYU Logo" className="w-8 h-8 object-contain" />
         <span>
           Vector-AY<span className="text-teal">U</span>
         </span>
