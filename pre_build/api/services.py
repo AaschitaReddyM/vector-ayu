@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+torch.set_num_threads(1)  # CRITICAL for single-core cloud deployments (Railway) to prevent OOM/deadlocks
 from pathlib import Path
 from datetime import datetime, timezone
 
