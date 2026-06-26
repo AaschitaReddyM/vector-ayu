@@ -86,7 +86,7 @@ function LoginPage() {
         {/* Hero */}
         <div className="text-center mb-10">
           <div className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-white border border-teal/30 shadow-[0_8px_40px_rgba(0,212,170,0.2)]">
-            <img src="/logo.jpeg" alt="Vector-AYU Logo" className="w-16 h-16 object-contain" />
+            <img src="/logo.png" alt="Vector-AYU Logo" className="w-16 h-16 object-contain" />
           </div>
           <h1 className="text-[2.5rem] font-extrabold tracking-tight text-gradient-brand">
             Vector-AYU
