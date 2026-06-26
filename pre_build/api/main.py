@@ -23,13 +23,13 @@ app.add_middleware(
 )
 
 @app.get("/api/patients", response_model=List[PatientSchema])
-async def list_patients():
+def list_patients():
     """Retrieve a list of all mock patients."""
     patients = get_all_patients()
     return [p.__dict__ | {"display_name": p.display_name} for p in patients]
 
 @app.get("/api/patients/{patient_id}", response_model=PatientDetailResponse)
-async def patient_details(patient_id: str):
+def patient_details(patient_id: str):
     """Retrieve details, observations, and medications for a specific patient."""
     try:
         patient, obs, meds = get_patient_detail(patient_id)
@@ -42,7 +42,7 @@ async def patient_details(patient_id: str):
         raise HTTPException(status_code=404, detail="Patient not found")
 
 @app.post("/api/pipeline/run/{patient_id}", response_model=RunPipelineResponse)
-async def trigger_pipeline(patient_id: str):
+def trigger_pipeline(patient_id: str):
     """Run the VAYU 7-stage pipeline for a given patient."""
     try:
         return run_patient_pipeline(patient_id)
@@ -50,7 +50,7 @@ async def trigger_pipeline(patient_id: str):
         raise HTTPException(status_code=404, detail="Patient not found")
 
 @app.get("/api/triage/queue", response_model=TriageDecisionResponse)
-async def triage_queue():
+def triage_queue():
     """Get the token-bucket constrained triage queue."""
     decision = get_triage_queue()
     return {
