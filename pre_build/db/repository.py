@@ -1,32 +1,28 @@
-"""Data-access helpers for VAYU's Supabase tables.
+"""Data-access helpers for VAYU's Firestore collections.
 
-Thin wrappers around the service-role client so ``api/services.py`` stays
-readable. Reads return domain objects (FHIR ``Patient``); writes accept the
-plain values the pipeline already produces.
-
-All functions raise on hard errors; callers that want the demo to survive a
-transient DB problem should wrap writes in try/except (see services.py).
+Replaces the old Supabase implementation.
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timezone, date
 
-from pre_build.db import get_service_supabase
+from pre_build.db.firestore_client import get_firestore_client
 from pre_build.fhir.fhir_client import Patient
 
 
 # ── Reads ──────────────────────────────────────────────────────────────────
 
 def fetch_patients() -> list[Patient]:
-    """Return all patients from Supabase as FHIR ``Patient`` objects."""
-    client = get_service_supabase()
-    resp = client.table("patients").select("*").order("id").execute()
+    """Return all patients from Firestore as FHIR ``Patient`` objects."""
+    db = get_firestore_client()
+    docs = db.collection("patients").stream()
     patients: list[Patient] = []
-    for row in resp.data or []:
+    for doc in docs:
+        row = doc.to_dict()
         patients.append(
             Patient(
-                id=row["id"],
+                id=doc.id,
                 given_name=row.get("given_name") or "",
                 family_name=row.get("family_name") or "",
                 birth_date=row.get("birth_date") or "",
@@ -40,11 +36,11 @@ def fetch_patients() -> list[Patient]:
 
 def fetch_risk_scores(patient_id: str | None = None, limit: int = 50) -> list[dict]:
     """Stored risk scores, newest first. Optionally filtered by patient."""
-    client = get_service_supabase()
-    q = client.table("risk_scores").select("*")
+    db = get_firestore_client()
+    query = db.collection("risk_scores").order_by("scored_at", direction=firestore.Query.DESCENDING).limit(limit)
     if patient_id:
-        q = q.eq("patient_id", patient_id)
-    return q.order("scored_at", desc=True).limit(limit).execute().data or []
+        query = query.where("patient_id", "==", patient_id)
+    return [doc.to_dict() for doc in query.stream()]
 
 
 def fetch_triage_entries(
@@ -53,22 +49,22 @@ def fetch_triage_entries(
     limit: int = 50,
 ) -> list[dict]:
     """Persisted triage decisions, newest first. Filter by patient and/or status."""
-    client = get_service_supabase()
-    q = client.table("triage_queue").select("*")
+    db = get_firestore_client()
+    query = db.collection("triage_queue").order_by("created_at", direction=firestore.Query.DESCENDING).limit(limit)
     if patient_id:
-        q = q.eq("patient_id", patient_id)
+        query = query.where("patient_id", "==", patient_id)
     if status:
-        q = q.eq("status", status)
-    return q.order("created_at", desc=True).limit(limit).execute().data or []
+        query = query.where("status", "==", status)
+    return [doc.to_dict() for doc in query.stream()]
 
 
 def fetch_outreach_logs(patient_id: str | None = None, limit: int = 50) -> list[dict]:
     """Outreach audit log, newest first. Optionally filtered by patient."""
-    client = get_service_supabase()
-    q = client.table("outreach_logs").select("*")
+    db = get_firestore_client()
+    query = db.collection("outreach_logs").order_by("sent_at", direction=firestore.Query.DESCENDING).limit(limit)
     if patient_id:
-        q = q.eq("patient_id", patient_id)
-    return q.order("sent_at", desc=True).limit(limit).execute().data or []
+        query = query.where("patient_id", "==", patient_id)
+    return [doc.to_dict() for doc in query.stream()]
 
 
 # ── Writes ─────────────────────────────────────────────────────────────────
@@ -81,7 +77,7 @@ def save_risk_score(
     top_head: str,
     scored_at: datetime | None = None,
 ) -> dict:
-    client = get_service_supabase()
+    db = get_firestore_client()
     row = {
         "patient_id": patient_id,
         "probabilities": probabilities,
@@ -90,7 +86,8 @@ def save_risk_score(
         "top_head": top_head,
         "scored_at": (scored_at or datetime.now(timezone.utc)).isoformat(),
     }
-    return client.table("risk_scores").insert(row).execute().data
+    _, ref = db.collection("risk_scores").add(row)
+    return row
 
 
 def save_triage_entry(
@@ -100,15 +97,17 @@ def save_triage_entry(
     status: str,
     triage_date: date | None = None,
 ) -> dict:
-    client = get_service_supabase()
+    db = get_firestore_client()
     row = {
         "patient_id": patient_id,
         "risk_total": risk_total,
         "head": head,
         "status": status,
         "triage_date": (triage_date or date.today()).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat()
     }
-    return client.table("triage_queue").insert(row).execute().data
+    _, ref = db.collection("triage_queue").add(row)
+    return row
 
 
 def save_outreach_log(
@@ -117,11 +116,12 @@ def save_outreach_log(
     message_content: str,
     sent_at: datetime | None = None,
 ) -> dict:
-    client = get_service_supabase()
+    db = get_firestore_client()
     row = {
         "patient_id": patient_id,
         "track": track,
         "message_content": message_content,
         "sent_at": (sent_at or datetime.now(timezone.utc)).isoformat(),
     }
-    return client.table("outreach_logs").insert(row).execute().data
+    _, ref = db.collection("outreach_logs").add(row)
+    return row
