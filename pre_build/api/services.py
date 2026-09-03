@@ -101,9 +101,26 @@ def run_patient_pipeline(patient_id: str):
         driver_objects.append({"label": f"Clinical Factor {k}", "stream": "static", "value": float(v)})
 
     # S7 Outreach
+    from pre_build.outreach.gemini_agent import generate_sms, SmsContext
+    
     consent = fresh_track_a(patient.id, signed_at=datetime.now(timezone.utc), policy_version="v3.2")
     plan = route_patient(consent)
-    outreach_message = f"Send 48h proactive {plan.outreach_channel.replace('_', ' ')} regarding {CLIMATE_ANOMALY}."
+    
+    drafted_sms = ""
+    if plan.may_send_automated_sms:
+        print(f"\n[Agent] Drafting personalized SMS via Vertex AI for {patient.display_name}...")
+        drafted_sms = generate_sms(SmsContext(
+            given_name=patient.given_name,
+            head=top_head,
+            climate_anomaly=CLIMATE_ANOMALY,
+            city="Dallas",
+            locale="es" if patient.primary_language == "es" else "en",
+        ))
+        print(f"[Agent SMS Result]: {drafted_sms}\n")
+        outreach_message = f"Drafted SMS: {drafted_sms}"
+    else:
+        outreach_message = f"Send 48h proactive {plan.outreach_channel.replace('_', ' ')} regarding {CLIMATE_ANOMALY}."
+        
     note = build_progress_note(
         summary=RiskSummary(patient_id=patient.id, head=top_head, volatility_delta=combined, forecast_probability=probs[top_head], horizon_hours=72, top_drivers=driver_strings),
         recommendations=[outreach_message],

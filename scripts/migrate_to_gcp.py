@@ -17,8 +17,8 @@ from pre_build.explain.channel_labels import STATIC_LABELS
 def main():
     print("Starting migration script...")
     
-    # 1. Setup GCP Authentication
-    key_path = Path(r"c:\Users\Vector-Ayu (VAYU)\Desktop\vayu\gcp-key.json.json")
+    # Set up authentication using the key file
+    key_path = Path(r"c:\Users\Vector-Ayu (VAYU)\Desktop\vayu\version-1\gcp-key.json.json")
     if not key_path.exists():
         print(f"Error: Could not find key file at {key_path}")
         return
@@ -77,15 +77,16 @@ def main():
         else:
             print(f"Dataset creation message: {e}")
             
-    table_id = f"{dataset_id}.patient_profiles"
-    
-    print("Uploading to BigQuery...")
-    job_config = bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
-    job = bq_client.load_table_from_dataframe(df_static, table_id, job_config=job_config)
-    job.result()  # Wait for the job to complete
-    
-    table = bq_client.get_table(table_id)
-    print(f"Success! Uploaded {table.num_rows} rows to BigQuery table: {table_id}")
+    # ==========================================
+    # 3. PUSH TO BIGQUERY (Skipped - Already Done in Phase 1)
+    # ==========================================
+    # print(f"\nPushing {len(df)} temporal records to BigQuery...")
+    # job = bq_client.load_table_from_dataframe(
+    #     df, table_id, job_config=job_config
+    # )
+    # job.result()  # Wait for the job to complete
+    # print(f"✓ BigQuery upload complete! Table: {table_id}")
+    print("\n✓ BigQuery upload skipped (already completed in Phase 1).")
     
     # 4. Push subset to Firestore
     # WARNING: Firestore Spark (Free) tier limits writes to 20,000 per day.

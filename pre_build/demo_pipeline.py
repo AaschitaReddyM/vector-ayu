@@ -51,7 +51,8 @@ from pre_build.model import (
     TFTConfig,
     TFTSkeleton,
 )
-from pre_build.outreach import SmsContext, render_sms
+from pre_build.outreach.gemini_agent import generate_sms
+from pre_build.outreach.sms_template import SmsContext
 from pre_build.spatial import build_zip_index, resolve_coordinate
 from pre_build.triage import (
     PatientFlag,
@@ -200,7 +201,7 @@ def run() -> None:
     print(f"  consent track : {plan.track.value} (outreach via {plan.outreach_channel})")
 
     if plan.may_send_automated_sms:
-        sms = render_sms(SmsContext(
+        sms = generate_sms(SmsContext(
             given_name=patient.given_name,
             head=top_head,
             climate_anomaly=CLIMATE_ANOMALY,
