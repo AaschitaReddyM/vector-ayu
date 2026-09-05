@@ -12,7 +12,7 @@ import {
 } from "./mock-data";
 
 export const patientsQuery = queryOptions({
-  queryKey: ["patients"],
+  queryKey: ["patients", typeof window !== "undefined" ? localStorage.getItem("vayu_region") || "dallas" : "dallas"],
   queryFn: async (): Promise<Patient[]> => {
     let pts = MOCK_PATIENTS;
     if (typeof window !== "undefined") {
@@ -90,7 +90,7 @@ export const triageQuery = queryOptions({
         if (res.ok) {
           const data = await res.json();
           const entries: TriageEntry[] = [];
-          data.accepted.forEach((f: any) => {
+          data.accepted?.forEach((f: any) => {
             entries.push({
               id: `tq-${f.patient_id}`,
               patient_id: f.patient_id,
@@ -100,7 +100,7 @@ export const triageQuery = queryOptions({
               triage_date: new Date().toISOString()
             });
           });
-          data.deferred.forEach((f: any) => {
+          data.deferred?.forEach((f: any) => {
             entries.push({
               id: `tq-${f.patient_id}`,
               patient_id: f.patient_id,
@@ -110,7 +110,17 @@ export const triageQuery = queryOptions({
               triage_date: new Date().toISOString()
             });
           });
-          if (entries.length > 0) return entries;
+
+          // Validate that the returned patients belong to the requested cohort
+          const isIndiaPatient = (pid: string) => {
+            const num = parseInt(pid.replace("PT-", ""), 10);
+            return num >= 13 && num <= 24;
+          };
+          const matchingEntries = entries.filter((e) =>
+            isNewDelhi ? isIndiaPatient(e.patient_id) : !isIndiaPatient(e.patient_id)
+          );
+
+          if (matchingEntries.length > 0) return matchingEntries;
         }
       } catch (err) {
         console.error("Failed to fetch triage queue from backend, falling back to static mock", err);

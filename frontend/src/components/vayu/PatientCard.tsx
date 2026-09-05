@@ -40,9 +40,13 @@ export function PatientCard({
           <div className="text-[0.72rem] text-text-dim mt-1.5 flex items-center gap-2">
             <span>ZIP {patient.postal_code}</span>
             <span className="bg-white/5 text-white/70 px-1.5 py-0.5 rounded text-[0.65rem] uppercase font-bold tracking-wider">
-              {typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi'
-                ? (patient.primary_language === "es" ? "Telugu" : "Hindi")
-                : (patient.primary_language === "es" ? "Español" : "English")}
+              {patient.primary_language === "te"
+                ? "Telugu"
+                : patient.primary_language === "hi"
+                ? "Hindi"
+                : patient.primary_language === "es"
+                ? "Español"
+                : "English"}
             </span>
             <span className={`px-1.5 py-0.5 rounded text-[0.65rem] uppercase font-bold tracking-wider ${
               score.top_head === 'respiratory' ? 'bg-amber/10 text-amber' : 

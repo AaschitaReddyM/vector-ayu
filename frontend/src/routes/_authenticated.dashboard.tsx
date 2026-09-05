@@ -7,7 +7,7 @@ import { PatientCard } from "@/components/vayu/PatientCard";
 import { StatCard } from "@/components/vayu/StatCard";
 import { useState } from "react";
 import { patientsQuery, riskScoresQuery, triageQuery } from "@/lib/queries";
-import { getPatientCondition } from "@/lib/mock-data";
+import { getPatientCondition, MOCK_PATIENTS, MOCK_RISK_SCORES } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -446,9 +446,18 @@ function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {top.map((t) => {
-            const p = patientMap.get(t.patient_id);
-            const s = scoreMap.get(t.patient_id);
-            if (!p || !s) return null;
+            const p = patientMap.get(t.patient_id) || MOCK_PATIENTS.find((mp) => mp.id === t.patient_id);
+            if (!p) return null;
+            const s = scoreMap.get(t.patient_id) || MOCK_RISK_SCORES.find((ms) => ms.patient_id === t.patient_id) || {
+              id: `rs-${p.id}`,
+              patient_id: p.id,
+              scored_at: new Date().toISOString(),
+              risk_total: t.risk_total,
+              top_head: (t.head || "respiratory") as "respiratory" | "cardiovascular" | "metabolic",
+              probabilities: { respiratory: 0.8, cardiovascular: 0.5, metabolic: 0.3 },
+              climate_volatility_delta: { respiratory: 1.2, cardiovascular: 0.8, metabolic: 0.4 },
+              combined_delta: 2.1,
+            };
             return <PatientCard key={t.id} patient={p} score={s} riskTotal={t.risk_total} />;
           })}
         </div>
@@ -474,7 +483,7 @@ function DashboardPage() {
             </thead>
             <tbody>
               {top.map((t) => {
-                const p = patientMap.get(t.patient_id);
+                const p = patientMap.get(t.patient_id) || MOCK_PATIENTS.find((mp) => mp.id === t.patient_id);
                 if (!p) return null;
                 const color =
                   t.risk_total >= 85 ? "#ff6b6b" : t.risk_total >= 70 ? "#ffb347" : "#4ea8de";

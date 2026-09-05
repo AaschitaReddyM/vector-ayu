@@ -7,7 +7,7 @@ import { RiskRing } from "@/components/vayu/RiskRing";
 import { RiskTrajectoryChart } from "@/components/vayu/RiskTrajectoryChart";
 import { XaiBars } from "@/components/vayu/XaiBars";
 import { patientQuery, riskScoreQuery } from "@/lib/queries";
-import { MEDICATIONS, getPatientCondition, PATIENT_DRIVERS, RISK_TRAJECTORY } from "@/lib/mock-data";
+import { MEDICATIONS, getPatientCondition, PATIENT_DRIVERS, RISK_TRAJECTORY, MOCK_PATIENTS, MOCK_RISK_SCORES } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/_authenticated/patient/$id")({
   head: ({ params }) => ({
@@ -41,13 +41,26 @@ function PatientDetail() {
   const [{ data: patient }, { data: score }] = useSuspenseQueries({
     queries: [patientQuery(id), riskScoreQuery(id)],
   });
-  if (!patient || !score) throw notFound();
 
-  const age = new Date().getFullYear() - new Date(patient.birth_date).getFullYear();
+  const effectivePatient = patient || MOCK_PATIENTS.find((p) => p.id === id);
+  if (!effectivePatient) throw notFound();
+
+  const effectiveScore = score || MOCK_RISK_SCORES.find((s) => s.patient_id === id) || {
+    id: `rs-${effectivePatient.id}`,
+    patient_id: effectivePatient.id,
+    scored_at: new Date().toISOString(),
+    risk_total: 85,
+    top_head: "respiratory" as const,
+    probabilities: { respiratory: 0.85, cardiovascular: 0.45, metabolic: 0.25 },
+    climate_volatility_delta: { respiratory: 1.4, cardiovascular: 0.6, metabolic: 0.3 },
+    combined_delta: 2.2,
+  };
+
+  const age = new Date().getFullYear() - new Date(effectivePatient.birth_date).getFullYear();
   const defaultDrivers =
-    PATIENT_DRIVERS[patient.id] ?? PATIENT_DRIVERS[Object.keys(PATIENT_DRIVERS)[0]];
+    PATIENT_DRIVERS[effectivePatient.id] ?? PATIENT_DRIVERS[Object.keys(PATIENT_DRIVERS)[0]];
   const [activeDrivers, setActiveDrivers] = useState(defaultDrivers);
-  const condition = getPatientCondition(patient.id) ?? "COPD";
+  const condition = getPatientCondition(effectivePatient.id) ?? "COPD";
 
   return (
     <div className="max-w-[1440px] mx-auto px-7 py-7 flex flex-col gap-6">
@@ -69,15 +82,21 @@ function PatientDetail() {
           }}
         />
         <div>
-          <div className="text-[1.6rem] font-extrabold text-teal tracking-tight">{patient.id}</div>
+          <div className="text-[1.6rem] font-extrabold text-teal tracking-tight">{effectivePatient.id}</div>
           <div className="text-[1.05rem] font-semibold mt-1">
-            {patient.given_name} {patient.family_name}
+            {effectivePatient.given_name} {effectivePatient.family_name}
           </div>
           <div className="text-[0.82rem] text-text-dim mt-1">
-            Age {age} · {patient.gender} · ZIP {patient.postal_code} ·{" "}
-            {typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi' 
-              ? (patient.primary_language === "es" ? "Telugu" : "Hindi") 
-              : (patient.primary_language === "es" ? "Español" : "English")}
+            Age {age} · {effectivePatient.gender} · ZIP {effectivePatient.postal_code} ·{" "}
+            <span className="bg-white/5 text-white/70 px-1.5 py-0.5 rounded text-[0.72rem] uppercase font-bold tracking-wider">
+              {effectivePatient.primary_language === "te"
+                ? "Telugu"
+                : effectivePatient.primary_language === "hi"
+                ? "Hindi"
+                : effectivePatient.primary_language === "es"
+                ? "Español"
+                : "English"}
+            </span>
           </div>
         </div>
         <div className="flex flex-col items-center gap-2">
@@ -100,7 +119,7 @@ function PatientDetail() {
               try {
                 toast.loading("Running Pipeline...", { id: "sim2" });
                 const apiUrl = import.meta.env.VITE_API_URL || "https://vector-ayu-213260234201.us-central1.run.app";
-                const res = await fetch(`${apiUrl}/api/pipeline/run/${patient.id}`, {
+                const res = await fetch(`${apiUrl}/api/pipeline/run/${effectivePatient.id}`, {
                   method: "POST",
                 });
                 if (res.ok) {
@@ -108,7 +127,7 @@ function PatientDetail() {
                   if (data.top_drivers && data.top_drivers.length > 0) {
                     setActiveDrivers(data.top_drivers);
                   }
-                  await queryClient.invalidateQueries({ queryKey: ["risk_score", patient.id] });
+                  await queryClient.invalidateQueries({ queryKey: ["risk_score", effectivePatient.id] });
                   await queryClient.invalidateQueries({ queryKey: ["risk_scores"] });
                   await queryClient.invalidateQueries({ queryKey: ["triage_queue"] });
                   toast.success("Pipeline successful!", { id: "sim2" });
@@ -132,14 +151,14 @@ function PatientDetail() {
           <h2 className="text-[1.05rem] font-bold">🎯 Risk Probabilities — Next 72h</h2>
           <span className="text-[0.72rem] text-text-dim">
             Top firing head:{" "}
-            <span className="text-coral font-semibold uppercase">{score.top_head}</span>
+            <span className="text-coral font-semibold uppercase">{effectiveScore.top_head}</span>
           </span>
         </div>
         <div className="grid grid-cols-3 gap-6">
           {(["respiratory", "cardiovascular", "metabolic"] as const).map((head) => (
             <div key={head} className="flex flex-col items-center gap-3">
               <RiskRing
-                value={score.probabilities[head]}
+                value={effectiveScore.probabilities[head]}
                 color={RING_COLORS[head]}
                 size={140}
                 label={head}
@@ -147,7 +166,7 @@ function PatientDetail() {
               <div className="text-[0.7rem] text-text-muted text-center">
                 Climate Δ{" "}
                 <span className="text-coral font-semibold">
-                  +{score.climate_volatility_delta[head].toFixed(2)}
+                  +{effectiveScore.climate_volatility_delta[head].toFixed(2)}
                 </span>
               </div>
             </div>
