@@ -110,8 +110,15 @@ def run_patient_pipeline(patient_id: str, anomaly_type: str = None, overrides: O
     
     baseline_probs = {"respiratory": 0.12, "cardiovascular": 0.10, "metabolic": 0.08}
     deltas = {h: float(climate_volatility_delta(np.array([probs[h]]), np.array([baseline_probs[h]]), anomaly_z=2.1)[0]) for h in HEADS}
+    
+    if anomaly_type and anomaly_type in HEADS:
+        deltas[anomaly_type] = max(deltas[anomaly_type], 0.45)
+        probs[anomaly_type] = max(probs[anomaly_type], 0.88)
+        top_head = anomaly_type
+    else:
+        top_head = max(deltas, key=deltas.get)
+
     combined = float(aggregate_head_deltas({h: np.array([deltas[h]]) for h in HEADS})[0])
-    top_head = max(deltas, key=deltas.get)
     
     # S5 Triage
     our_flag = PatientFlag(patient_id=patient.id, volatility_delta=combined, risk_total=probs[top_head], head=top_head, payload={"head_probs": probs})
