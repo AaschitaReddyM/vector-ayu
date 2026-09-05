@@ -37,7 +37,9 @@ function DashboardPage() {
   const critical = top.filter((t) => t.risk_total >= 85).length;
   const high = top.filter((t) => t.risk_total >= 70 && t.risk_total < 85).length;
 
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("PT-0006"); // Start with Lin for the pitch
+  const isNewDelhi = typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi';
+  const currentRegion = isNewDelhi ? 'new_delhi' : 'dallas';
+  const [selectedPatientId, setSelectedPatientId] = useState<string>(isNewDelhi ? "PT-0013" : "PT-0001");
   const [cronResult, setCronResult] = useState<any>(null);
   const [showSandbox, setShowSandbox] = useState(false);
   const [overrides, setOverrides] = useState({ spo2: "", systolic_bp: "", custom_aqi: "" });
@@ -51,7 +53,7 @@ function DashboardPage() {
             <span className="mr-2">🫁</span> 72-Hour Triage Dashboard
           </h1>
           <p className="text-[0.88rem] text-text-dim mt-1.5">
-            High-risk patients ranked by climate volatility delta · {typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi' ? 'NCR (National Capital Region)' : 'DFW Metro'}
+            High-risk patients ranked by climate volatility delta · {isNewDelhi ? 'NCR (National Capital Region)' : 'DFW Metro'}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -72,7 +74,7 @@ function DashboardPage() {
               onChange={(e) => setAnomalyType(e.target.value)}
               className="bg-transparent text-coral px-3.5 py-2 text-sm font-medium focus:outline-none cursor-pointer border-r border-coral/40"
             >
-              {typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi' ? (
+              {isNewDelhi ? (
                 <>
                   <option value="respiratory" className="bg-[#12141f] text-foreground">Respiratory 🫁 (Crop Stubble Smog)</option>
                   <option value="cardiovascular" className="bg-[#12141f] text-foreground">Cardiovascular ❤️ (Pre-Monsoon Heatwave)</option>
@@ -93,7 +95,7 @@ function DashboardPage() {
                 try {
                   toast.loading(`Simulating ${anomalyType} anomaly (DANGER)...`, { id: "cron" });
                   const apiUrl = import.meta.env.VITE_API_URL || "https://vector-ayu-213260234201.us-central1.run.app";
-                  const res = await fetch(`${apiUrl}/api/cron/scan-climate?anomaly_type=${anomalyType}`, {
+                  const res = await fetch(`${apiUrl}/api/cron/scan-climate?anomaly_type=${anomalyType}&region=${currentRegion}`, {
                     method: "POST",
                   });
                   if (res.ok) {
@@ -122,7 +124,8 @@ function DashboardPage() {
         const s = parseFloat(overrides.spo2) || 96;
         const bp = parseFloat(overrides.systolic_bp) || 120;
         const aqi = parseInt(overrides.custom_aqi) || 50;
-        const selectedPatient = patientMap.get(selectedPatientId);
+        const selectedPatient = patientMap.get(selectedPatientId) || patients[0];
+        const effectivePatientId = selectedPatient?.id || selectedPatientId;
 
         let riskLevel = "Stable";
         let riskColor = "text-teal border-teal/40 bg-teal/10";
@@ -164,7 +167,7 @@ function DashboardPage() {
               <div className="flex items-center gap-3">
                 <span className="text-xs font-semibold uppercase text-text-dim">Patient:</span>
                 <select 
-                  value={selectedPatientId}
+                  value={effectivePatientId}
                   onChange={(e) => setSelectedPatientId(e.target.value)}
                   className="bg-surface border border-border text-text px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-amber cursor-pointer font-medium"
                 >
@@ -186,7 +189,7 @@ function DashboardPage() {
                       if (overrides.systolic_bp) payload.systolic_bp = parseFloat(overrides.systolic_bp);
                       if (overrides.custom_aqi) payload.custom_aqi = parseInt(overrides.custom_aqi);
                       
-                      const res = await fetch(`${apiUrl}/api/pipeline/run/${selectedPatientId}`, {
+                      const res = await fetch(`${apiUrl}/api/pipeline/run/${effectivePatientId}?region=${currentRegion}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ overrides: payload })

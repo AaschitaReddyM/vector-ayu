@@ -60,14 +60,15 @@ const CONDS = [
 ];
 
 export const MOCK_PATIENTS: Patient[] = Array.from({ length: 24 }).map((_, i) => {
-  const rank = Math.floor(i / 3);
   const isIndia = i >= 12;
   
   let lang = "en";
   if (isIndia) {
-    lang = rank % 4 === 0 ? "hi" : rank % 4 === 1 ? "te" : "en";
+    const cohortRank = Math.floor((i - 12) / 3);
+    lang = cohortRank === 0 ? "hi" : cohortRank === 1 ? "te" : cohortRank === 2 ? "en" : "te";
   } else {
-    lang = rank === 1 ? "es" : "en";
+    const cohortRank = Math.floor(i / 3);
+    lang = cohortRank === 1 ? "es" : "en";
   }
 
   return {
@@ -76,7 +77,7 @@ export const MOCK_PATIENTS: Patient[] = Array.from({ length: 24 }).map((_, i) =>
     family_name: LAST[i],
     birth_date: `19${40 + i}-0${(i % 9) + 1}-1${i % 9}`,
     gender: i % 3 === 0 ? "male" : "female",
-    postal_code: `752${i.toString().padStart(2, "0")}`,
+    postal_code: isIndia ? `1100${i.toString().padStart(2, "0")}` : `752${i.toString().padStart(2, "0")}`,
     primary_language: lang,
   };
 });
@@ -110,14 +111,19 @@ export const MOCK_RISK_SCORES: RiskScore[] = MOCK_PATIENTS.map((p, i) => {
   };
 });
 
-export const MOCK_TRIAGE: TriageEntry[] = MOCK_PATIENTS.map((p, i) => ({
-  id: `tq-${p.id}`,
-  patient_id: p.id,
-  risk_total: Math.round((0.95 - i * 0.06) * 100),
-  head: ["respiratory", "cardiovascular", "metabolic"][i % 3],
-  status: i < 7 ? "accepted" : i < 10 ? "deferred" : "completed",
-  triage_date: new Date(Date.now() - (i * 86400_000) / 4).toISOString(),
-}));
+export const MOCK_TRIAGE: TriageEntry[] = MOCK_PATIENTS.map((p, i) => {
+  const isIndia = i >= 12;
+  const cohortRank = isIndia ? Math.floor((i - 12) / 3) : Math.floor(i / 3);
+  const cohortIdx = isIndia ? (i - 12) % 3 : i % 3;
+  return {
+    id: `tq-${p.id}`,
+    patient_id: p.id,
+    risk_total: Math.round((0.96 - cohortRank * 0.07 - cohortIdx * 0.01) * 100),
+    head: (["respiratory", "cardiovascular", "metabolic"] as const)[cohortIdx],
+    status: cohortRank < 3 ? "accepted" : "deferred",
+    triage_date: new Date(Date.now() - (i * 86400_000) / 4).toISOString(),
+  };
+});
 
 export const MOCK_OUTREACH: OutreachLog[] = [
   {

@@ -40,14 +40,16 @@ export const patientQuery = (id: string) =>
   });
 
 export const riskScoresQuery = queryOptions({
-  queryKey: ["risk_scores"],
+  queryKey: ["risk_scores", typeof window !== "undefined" ? localStorage.getItem("vayu_region") || "dallas" : "dallas"],
   queryFn: async (): Promise<RiskScore[]> => {
-    if (!isSupabaseConfigured || !supabase) return MOCK_RISK_SCORES;
+    const isNewDelhi = typeof window !== "undefined" && localStorage.getItem("vayu_region") === "new_delhi";
+    const defaultScores = isNewDelhi ? MOCK_RISK_SCORES.slice(12, 24) : MOCK_RISK_SCORES.slice(0, 12);
+    if (!isSupabaseConfigured || !supabase) return defaultScores;
     const { data, error } = await supabase
       .from("risk_scores")
       .select("*")
       .order("scored_at", { ascending: false });
-    if (error || !data || data.length === 0) return MOCK_RISK_SCORES;
+    if (error || !data || data.length === 0) return defaultScores;
     return data as RiskScore[];
   },
 });
@@ -74,13 +76,17 @@ export const riskScoreQuery = (patientId: string) =>
   });
 
 export const triageQuery = queryOptions({
-  queryKey: ["triage_queue"],
+  queryKey: ["triage_queue", typeof window !== "undefined" ? localStorage.getItem("vayu_region") || "dallas" : "dallas"],
   queryFn: async (): Promise<TriageEntry[]> => {
+    const region = typeof window !== "undefined" ? localStorage.getItem("vayu_region") || "dallas" : "dallas";
+    const isNewDelhi = region === "new_delhi";
+    const defaultMock = isNewDelhi ? MOCK_TRIAGE.slice(12, 24) : MOCK_TRIAGE.slice(0, 12);
+
     if (!isSupabaseConfigured || !supabase) {
       // Fetch from local FastAPI backend
       try {
         const apiUrl = import.meta.env.VITE_API_URL || "https://vector-ayu-213260234201.us-central1.run.app";
-        const res = await fetch(`${apiUrl}/api/triage/queue`);
+        const res = await fetch(`${apiUrl}/api/triage/queue?region=${region}`);
         if (res.ok) {
           const data = await res.json();
           const entries: TriageEntry[] = [];
@@ -104,20 +110,18 @@ export const triageQuery = queryOptions({
               triage_date: new Date().toISOString()
             });
           });
-          // Also patch in the combined_delta from riskScores to match the frontend expectations?
-          // The frontend dashboard relies on scores.combined_delta. 
-          return entries;
+          if (entries.length > 0) return entries;
         }
       } catch (err) {
         console.error("Failed to fetch triage queue from backend, falling back to static mock", err);
       }
-      return MOCK_TRIAGE;
+      return defaultMock;
     }
     const { data, error } = await supabase
       .from("triage_queue")
       .select("*")
       .order("risk_total", { ascending: false });
-    if (error || !data || data.length === 0) return MOCK_TRIAGE;
+    if (error || !data || data.length === 0) return defaultMock;
     return data as TriageEntry[];
   },
 });

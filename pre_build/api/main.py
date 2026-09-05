@@ -23,9 +23,9 @@ app.add_middleware(
 )
 
 @app.get("/api/patients", response_model=List[PatientSchema])
-def list_patients():
+def list_patients(region: Optional[str] = None):
     """Retrieve a list of all mock patients."""
-    patients = get_all_patients()
+    patients = get_all_patients(region)
     return [p.__dict__ | {"display_name": p.display_name} for p in patients]
 
 @app.get("/api/patients/{patient_id}", response_model=PatientDetailResponse)
@@ -42,17 +42,17 @@ def patient_details(patient_id: str):
         raise HTTPException(status_code=404, detail="Patient not found")
 
 @app.post("/api/pipeline/run/{patient_id}", response_model=RunPipelineResponse)
-def trigger_pipeline(patient_id: str, anomaly_type: Optional[str] = None, overrides: Optional[SimulationOverrides] = None):
+def trigger_pipeline(patient_id: str, anomaly_type: Optional[str] = None, overrides: Optional[SimulationOverrides] = None, region: Optional[str] = None):
     """Run the VAYU 7-stage pipeline for a given patient."""
     try:
-        return run_patient_pipeline(patient_id, anomaly_type, overrides)
+        return run_patient_pipeline(patient_id, anomaly_type, overrides, region=region)
     except KeyError:
         raise HTTPException(status_code=404, detail="Patient not found")
 
 @app.get("/api/triage/queue", response_model=TriageDecisionResponse)
-def triage_queue():
+def triage_queue(region: Optional[str] = None):
     """Get the token-bucket constrained triage queue."""
-    decision = get_triage_queue()
+    decision = get_triage_queue(region)
     return {
         "accepted": [f.__dict__ for f in decision.accepted],
         "deferred": [f.__dict__ for f in decision.deferred],
@@ -71,10 +71,10 @@ def set_session(req: SessionRequest):
     return {"status": "ok", "region": req.region}
 
 @app.post("/api/cron/scan-climate")
-def trigger_autonomous_cron(anomaly_type: Optional[str] = None):
+def trigger_autonomous_cron(anomaly_type: Optional[str] = None, region: Optional[str] = None):
     """Simulate a Google Cloud Scheduler hitting this endpoint every hour."""
     try:
-        return run_autonomous_cron(anomaly_type)
+        return run_autonomous_cron(anomaly_type, region)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -88,28 +88,28 @@ def trigger_autonomous_cron(anomaly_type: Optional[str] = None):
 # ---------------------------------------------------------------------------
 
 @app.get("/patients", response_model=List[PatientSchema])
-async def list_patients_alias():
+async def list_patients_alias(region: Optional[str] = None):
     """Alias of GET /api/patients."""
-    return await list_patients()
+    return list_patients(region)
 
 
 @app.get("/risk-scores", response_model=RunPipelineResponse)
-async def risk_scores_alias(patient_id: str):
+async def risk_scores_alias(patient_id: str, region: Optional[str] = None):
     """Alias for the dynamic pipeline run. Pass ?patient_id=PT-0001.
 
     Runs Stages 1-4 (EHR fetch, exposure attenuation, TFT inference,
     climate volatility delta) plus triage/XAI/outreach, live per request.
     """
     try:
-        return run_patient_pipeline(patient_id)
+        return run_patient_pipeline(patient_id, region=region)
     except KeyError:
         raise HTTPException(status_code=404, detail="Patient not found")
 
 
 @app.get("/triage-queue", response_model=TriageDecisionResponse)
-async def triage_queue_alias():
+async def triage_queue_alias(region: Optional[str] = None):
     """Alias of GET /api/triage/queue."""
-    return await triage_queue()
+    return triage_queue(region)
 
 
 # ---------------------------------------------------------------------------

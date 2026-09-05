@@ -88,10 +88,11 @@ class MockFhirClient:
         if not self.seed_patients:
             self.seed_patients = {p.id: p for p in _DEFAULT_PATIENTS}
 
-    def get_all_patients(self) -> list[Patient]:
+    def get_all_patients(self, region: str = None) -> list[Patient]:
         """Returns the mock patient database."""
         from pre_build.api.services import CURRENT_REGION
-        if CURRENT_REGION == "new_delhi":
+        eff_region = region or CURRENT_REGION
+        if eff_region == "new_delhi":
             return _DEFAULT_PATIENTS[12:24]
         return _DEFAULT_PATIENTS[0:12]
 
@@ -132,17 +133,18 @@ _LAST = [
 
 _DEFAULT_PATIENTS: list[Patient] = []
 for i in range(24):
-    # i % 3 determines the cohort (0=resp, 1=cardio, 2=meta).
-    # i // 3 determines the rank within that cohort (0, 1, 2, 3).
-    rank = i // 3
     is_india = i >= 12
-    
     if is_india:
-        # India: Rank 0 -> hi, Rank 1 -> te, Rank 2+ -> en
-        lang = "hi" if rank % 4 == 0 else "te" if rank % 4 == 1 else "en"
+        cohort_rank = (i - 12) // 3
+        # cohort_rank 0 -> hi, cohort_rank 1 -> te, cohort_rank 2 -> en, cohort_rank 3 -> te
+        lang = "hi" if cohort_rank == 0 else "te" if cohort_rank == 1 else "en" if cohort_rank == 2 else "te"
+        smart_home = (cohort_rank < 2)
+        postal = f"1100{i:02d}"
     else:
-        # Dallas: Rank 0 -> en, Rank 1 -> es, Rank 2+ -> en
-        lang = "es" if rank == 1 else "en"
+        cohort_rank = i // 3
+        lang = "es" if cohort_rank == 1 else "en"
+        smart_home = (cohort_rank < 2)
+        postal = f"752{i:02d}"
         
     _DEFAULT_PATIENTS.append(Patient(
         id=f"PT-{i+1:04d}",
@@ -150,9 +152,9 @@ for i in range(24):
         family_name=_LAST[i],
         birth_date=f"19{40+i}-0{(i%9)+1}-1{i%9}",
         gender="male" if i % 3 == 0 else "female",
-        postal_code=f"752{i:02d}",
+        postal_code=postal,
         primary_language=lang,
-        has_smart_home=(rank < 2)  # Top 2 patients in every cohort get a smart home!
+        has_smart_home=smart_home
     ))
 
 _OBSERVATIONS_BY_PATIENT: dict[str, list[Observation]] = {
