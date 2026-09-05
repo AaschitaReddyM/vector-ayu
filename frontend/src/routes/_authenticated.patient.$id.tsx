@@ -7,7 +7,7 @@ import { RiskRing } from "@/components/vayu/RiskRing";
 import { RiskTrajectoryChart } from "@/components/vayu/RiskTrajectoryChart";
 import { XaiBars } from "@/components/vayu/XaiBars";
 import { patientQuery, riskScoreQuery } from "@/lib/queries";
-import { MEDICATIONS, PATIENT_CONDITION, PATIENT_DRIVERS, RISK_TRAJECTORY } from "@/lib/mock-data";
+import { MEDICATIONS, getPatientCondition, PATIENT_DRIVERS, RISK_TRAJECTORY } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/_authenticated/patient/$id")({
   head: ({ params }) => ({
@@ -47,7 +47,7 @@ function PatientDetail() {
   const defaultDrivers =
     PATIENT_DRIVERS[patient.id] ?? PATIENT_DRIVERS[Object.keys(PATIENT_DRIVERS)[0]];
   const [activeDrivers, setActiveDrivers] = useState(defaultDrivers);
-  const condition = PATIENT_CONDITION[patient.id] ?? "COPD";
+  const condition = getPatientCondition(patient.id) ?? "COPD";
 
   return (
     <div className="max-w-[1440px] mx-auto px-7 py-7 flex flex-col gap-6">
@@ -75,7 +75,9 @@ function PatientDetail() {
           </div>
           <div className="text-[0.82rem] text-text-dim mt-1">
             Age {age} · {patient.gender} · ZIP {patient.postal_code} ·{" "}
-            {patient.primary_language === "es" ? "Español" : "English"}
+            {typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi' 
+              ? (patient.primary_language === "es" ? "Telugu" : "Hindi") 
+              : (patient.primary_language === "es" ? "Español" : "English")}
           </div>
         </div>
         <div className="flex flex-col items-center gap-2">
@@ -267,6 +269,81 @@ function PatientDetail() {
           <RiskTrajectoryChart data={RISK_TRAJECTORY} />
         </div>
       </section>
+
+      {/* Hyper-Local AI Care Plan & Logistics */}
+      <div className="grid lg:grid-cols-2 gap-6 mb-10">
+        <section className="bg-teal-950/20 border border-teal/20 rounded-[14px] overflow-hidden animate-fade-up">
+          <header className="px-5 py-4 border-b border-teal/10 flex items-center justify-between">
+            <h2 className="text-[0.95rem] font-semibold text-teal flex items-center gap-2">
+              🤖 AI Generated Care Plan
+            </h2>
+            <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-teal/10 text-teal uppercase tracking-wider">
+              {typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi' ? 'AIIMS / Localized' : 'UTSW / Localized'}
+            </span>
+          </header>
+          <div className="p-5 text-sm text-text-dim leading-relaxed space-y-4">
+            {typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi' ? (
+              <>
+                <p>
+                  <strong>Immediate Threat:</strong> Severe AQI degradation due to regional stubble burning and low wind speeds in the NCR.
+                </p>
+                <p>
+                  <strong>Action Plan:</strong><br/>
+                  1. Keep patient indoors with air purifiers on max mode.<br/>
+                  2. Ensure daily controller inhaler adherence.<br/>
+                  3. If SpO2 drops below 92% or wheezing worsens, call <strong>112</strong> immediately or proceed to the nearest emergency ward at <strong>AIIMS New Delhi</strong>.
+                </p>
+              </>
+            ) : (
+              <>
+                <p>
+                  <strong>Immediate Threat:</strong> Incoming wildfire smoke plume driving PM2.5 to hazardous levels across the DFW Metroplex.
+                </p>
+                <p>
+                  <strong>Action Plan:</strong><br/>
+                  1. Keep windows closed and ensure home HVAC is running with MERV-13 filters.<br/>
+                  2. Maintain strict adherence to daily controller therapies.<br/>
+                  3. If respiratory distress occurs, dial <strong>911</strong> immediately or visit the <strong>UT Southwestern Medical Center</strong> ER.
+                </p>
+              </>
+            )}
+          </div>
+        </section>
+
+        <section className="bg-card border border-border rounded-[14px] overflow-hidden animate-fade-up">
+          <header className="px-5 py-4 border-b border-border flex items-center justify-between">
+            <h2 className="text-[0.95rem] font-semibold flex items-center gap-2">
+              🚚 Automated Logistics & Dispatch
+            </h2>
+            <span className="text-[0.65rem] font-bold px-2 py-0.5 rounded bg-purple/10 text-purple uppercase tracking-wider">
+              Prepared
+            </span>
+          </header>
+          <div className="p-5 text-sm space-y-4">
+            <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+              <div className="flex flex-col">
+                <span className="font-semibold text-text">Prophylactic Inhaler Refill</span>
+                <span className="text-[0.75rem] text-text-dim">
+                  {typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi' 
+                    ? 'Apollo Pharmacy via Swiggy Genie' 
+                    : 'CVS Pharmacy via UberHealth'}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="block font-bold text-teal">
+                  {typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi' 
+                    ? '₹ 450.00' 
+                    : '$ 15.00'}
+                </span>
+                <span className="text-[0.65rem] text-text-dim">Covered by Insurance</span>
+              </div>
+            </div>
+            <button className="w-full py-2 bg-purple/20 hover:bg-purple/30 text-purple font-semibold rounded-lg transition text-[0.8rem] border border-purple/20">
+              Authorize Dispatch
+            </button>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

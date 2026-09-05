@@ -26,6 +26,7 @@ class PatientSchema(BaseModel):
     postal_code: str
     primary_language: str
     display_name: str
+    has_smart_home: bool = False
 
 class PatientDetailResponse(BaseModel):
     patient: PatientSchema
@@ -65,7 +66,14 @@ class RunPipelineResponse(BaseModel):
     triage_rank: Optional[int]
     outreach_track: str
     fhir_note_id: str
+    drafted_sms: Optional[str] = None
+    iot_shielding: Optional[Dict[str, Any]] = None
 
+
+class SimulationOverrides(BaseModel):
+    spo2: Optional[float] = None
+    systolic_bp: Optional[float] = None
+    custom_aqi: Optional[int] = None
 
 # ── Stored-record schemas (history reads straight from Supabase) ────────────
 

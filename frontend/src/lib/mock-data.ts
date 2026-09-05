@@ -36,72 +36,77 @@ export type OutreachLog = {
 };
 
 const FIRST = [
-  "Eleanor",
-  "Maria",
-  "James",
-  "Aisha",
-  "Robert",
-  "Lin",
-  "Carlos",
-  "Patricia",
-  "Devon",
-  "Yusuf",
-  "Hannah",
-  "Marcus",
+  "Stefan", "Damon", "Chandler", "Joey", "Ross", "Rachel", 
+  "Monica", "Phoebe", "Michael", "Dwight", "Jim", "Pam",
+  "Raj", "Simran", "Bhuvan", "Ranchoddas", "Jai", "Veeru",
+  "Murli", "Tara", "Amarendra", "Arjun", "Devasena", "Pushpa", "Mahendra"
 ];
 const LAST = [
-  "Vance",
-  "Hernandez",
-  "Okonkwo",
-  "Patel",
-  "Chen",
-  "Rodriguez",
-  "Williams",
-  "Nguyen",
-  "Brooks",
-  "Al-Sayed",
-  "Johnson",
-  "Reyes",
+  "Salvatore", "Salvatore", "Bing", "Tribbiani", "Geller", "Green", 
+  "Geller", "Buffay", "Scott", "Schrute", "Halpert", "Beesly",
+  "Malhotra", "Singh", "Yadav", "Chanchad", "Thakur", "Sahay",
+  "Sharma", "Singh", "Baahubali", "Reddy", "Varma", "Raj", "Baahubali"
 ];
 const CONDS = [
   "COPD Stage IV (Very Severe)",
-  "COPD Stage III (Severe)",
-  "COPD Stage III (Severe)",
-  "COPD Stage II (Moderate)",
+  "Type 1 Diabetes (Brittle)",
   "Heart Failure NYHA III",
   "Type 2 Diabetes + CKD",
+  "COPD Stage III (Severe)",
+  "Pre-diabetes + Hypertension",
+  "Asthma + Obesity",
+  "Type 2 Diabetes (Uncontrolled)",
   "COPD Stage II (Moderate)",
-  "Asthma + Hypertension",
 ];
 
-export const MOCK_PATIENTS: Patient[] = Array.from({ length: 12 }).map((_, i) => ({
-  id: `PT-${(i + 1).toString().padStart(4, "0")}`,
-  given_name: FIRST[i],
-  family_name: LAST[i],
-  birth_date: `19${40 + i}-0${(i % 9) + 1}-1${i % 9}`,
-  gender: i % 3 === 0 ? "M" : "F",
-  postal_code: `752${i.toString().padStart(2, "0")}`,
-  primary_language: i % 4 === 0 ? "es" : "en",
-}));
+export const MOCK_PATIENTS: Patient[] = Array.from({ length: 24 }).map((_, i) => {
+  const rank = Math.floor(i / 3);
+  const isIndia = i >= 12;
+  
+  let lang = "en";
+  if (isIndia) {
+    lang = rank % 4 === 0 ? "hi" : rank % 4 === 1 ? "te" : "en";
+  } else {
+    lang = rank === 1 ? "es" : "en";
+  }
+
+  return {
+    id: `PT-${(i + 1).toString().padStart(4, "0")}`,
+    given_name: FIRST[i],
+    family_name: LAST[i],
+    birth_date: `19${40 + i}-0${(i % 9) + 1}-1${i % 9}`,
+    gender: i % 3 === 0 ? "male" : "female",
+    postal_code: `752${i.toString().padStart(2, "0")}`,
+    primary_language: lang,
+  };
+});
 
 export const MOCK_RISK_SCORES: RiskScore[] = MOCK_PATIENTS.map((p, i) => {
-  const base = 0.95 - i * 0.06;
+  const base = Math.max(0.1, 0.95 - i * 0.08); // simple decay
+  const heads = ["respiratory", "cardiovascular", "metabolic"] as const;
+  const top_head = heads[i % 3];
+  
   return {
     id: `rs-${p.id}`,
     patient_id: p.id,
-    probabilities: {
-      respiratory: Math.max(0.15, base),
-      cardiovascular: Math.max(0.1, base - 0.18),
-      metabolic: Math.max(0.08, base - 0.32),
-    },
+    scored_at: new Date().toISOString(),
+    risk_total: base * 100,
     climate_volatility_delta: {
-      respiratory: Math.max(0.1, 0.92 - i * 0.05),
-      cardiovascular: Math.max(0.08, 0.78 - i * 0.05),
-      metabolic: Math.max(0.05, 0.6 - i * 0.05),
+      respiratory: +(Math.random() * 2).toFixed(2),
+      cardiovascular: +(Math.random() * 1.5).toFixed(2),
+      metabolic: +(Math.random() * 1).toFixed(2),
+    },
+    probabilities: {
+      respiratory: top_head === "respiratory" ? base : base * 0.5,
+      cardiovascular: top_head === "cardiovascular" ? base : base * 0.5,
+      metabolic: top_head === "metabolic" ? base : base * 0.5,
     },
     combined_delta: +(2.4 - i * 0.18).toFixed(2),
-    top_head: "respiratory",
-    scored_at: new Date(Date.now() - i * 3600_000).toISOString(),
+    top_head: top_head,
+    top_drivers: [
+      { feature: "PM2.5 (3h avg)", weight: 0.8, description: "Spike in particulate matter" },
+      { feature: "FEV1 % Predicted", weight: 0.6, description: "Baseline lung function compromised" },
+    ],
   };
 });
 
@@ -157,9 +162,10 @@ export const PATIENT_DRIVERS: Record<
   ]),
 );
 
-export const PATIENT_CONDITION: Record<string, string> = Object.fromEntries(
-  MOCK_PATIENTS.map((p, i) => [p.id, CONDS[i % CONDS.length]]),
-);
+export const getPatientCondition = (patientId: string): string => {
+  const num = parseInt(patientId.replace(/\D/g, "")) || 0;
+  return CONDS[num % CONDS.length];
+};
 
 export const MEDICATIONS = [
   { name: "Tiotropium (Spiriva)", type: "LAMA", typeColor: "blue", adherence: 94 },

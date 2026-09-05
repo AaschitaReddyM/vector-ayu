@@ -35,6 +35,7 @@ class Patient:
     gender: str            # "male" | "female" | "other" | "unknown"
     postal_code: str       # demographic ZIP — feeds H3 lookup when no geo consent
     primary_language: str = "en"
+    has_smart_home: bool = False
 
     @property
     def display_name(self) -> str:
@@ -87,6 +88,13 @@ class MockFhirClient:
         if not self.seed_patients:
             self.seed_patients = {p.id: p for p in _DEFAULT_PATIENTS}
 
+    def get_all_patients(self) -> list[Patient]:
+        """Returns the mock patient database."""
+        from pre_build.api.services import CURRENT_REGION
+        if CURRENT_REGION == "new_delhi":
+            return _DEFAULT_PATIENTS[12:24]
+        return _DEFAULT_PATIENTS[0:12]
+
     def fetch_patient(self, patient_id: str) -> Patient:
         if patient_id not in self.seed_patients:
             raise KeyError(f"patient {patient_id} not found")
@@ -109,11 +117,33 @@ class MockFhirClient:
 
 # ── Seed data ──────────────────────────────────────────────────────────────
 
-_FIRST = ["Eleanor", "Maria", "James", "Aisha", "Robert", "Lin", "Carlos", "Patricia", "Devon", "Yusuf", "Hannah", "Marcus"]
-_LAST = ["Vance", "Hernandez", "Okonkwo", "Patel", "Chen", "Rodriguez", "Williams", "Nguyen", "Brooks", "Al-Sayed", "Johnson", "Reyes"]
+_FIRST = [
+  "Stefan", "Damon", "Chandler", "Joey", "Ross", "Rachel", 
+  "Monica", "Phoebe", "Michael", "Dwight", "Jim", "Pam",
+  "Raj", "Simran", "Bhuvan", "Ranchoddas", "Jai", "Veeru",
+  "Murli", "Tara", "Amarendra", "Arjun", "Devasena", "Pushpa"
+]
+_LAST = [
+  "Salvatore", "Salvatore", "Bing", "Tribbiani", "Geller", "Green", 
+  "Geller", "Buffay", "Scott", "Schrute", "Halpert", "Beesly",
+  "Malhotra", "Singh", "Yadav", "Chanchad", "Thakur", "Sahay",
+  "Sharma", "Singh", "Baahubali", "Reddy", "Varma", "Raj"
+]
 
 _DEFAULT_PATIENTS: list[Patient] = []
-for i in range(12):
+for i in range(24):
+    # i % 3 determines the cohort (0=resp, 1=cardio, 2=meta).
+    # i // 3 determines the rank within that cohort (0, 1, 2, 3).
+    rank = i // 3
+    is_india = i >= 12
+    
+    if is_india:
+        # India: Rank 0 -> hi, Rank 1 -> te, Rank 2+ -> en
+        lang = "hi" if rank % 4 == 0 else "te" if rank % 4 == 1 else "en"
+    else:
+        # Dallas: Rank 0 -> en, Rank 1 -> es, Rank 2+ -> en
+        lang = "es" if rank == 1 else "en"
+        
     _DEFAULT_PATIENTS.append(Patient(
         id=f"PT-{i+1:04d}",
         given_name=_FIRST[i],
@@ -121,7 +151,8 @@ for i in range(12):
         birth_date=f"19{40+i}-0{(i%9)+1}-1{i%9}",
         gender="male" if i % 3 == 0 else "female",
         postal_code=f"752{i:02d}",
-        primary_language="es" if i % 4 == 0 else "en"
+        primary_language=lang,
+        has_smart_home=(rank < 2)  # Top 2 patients in every cohort get a smart home!
     ))
 
 _OBSERVATIONS_BY_PATIENT: dict[str, list[Observation]] = {

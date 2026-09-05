@@ -181,6 +181,22 @@
   animation: pulseDot 2s ease-in-out infinite;
 }
 
+@keyframes marqueeUp {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-30%); }
+}
+@utility animate-marquee-up {
+  animation: marqueeUp 6s linear infinite;
+}
+
+@keyframes scanLaser {
+  0% { transform: translateX(-200%); }
+  100% { transform: translateX(1100%); }
+}
+@utility animate-scan-laser {
+  animation: scanLaser 2.5s ease-in-out infinite;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

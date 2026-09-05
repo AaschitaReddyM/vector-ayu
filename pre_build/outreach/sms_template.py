@@ -29,6 +29,7 @@ class SmsContext:
     city: str
     horizon_hours: int = 48
     locale: str = "en"              # "en" | "es"
+    has_smart_home: bool = False
 
 
 _NUDGE_BY_HEAD = {

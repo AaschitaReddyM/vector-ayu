@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { Patient, RiskScore } from "@/lib/mock-data";
-import { PATIENT_CONDITION } from "@/lib/mock-data";
+import { getPatientCondition } from "@/lib/mock-data";
 
 function riskColor(risk: number) {
   if (risk >= 85) return "#ff6b6b";
@@ -37,8 +37,20 @@ export function PatientCard({
           <div className="text-[0.92rem] font-semibold mt-0.5 truncate">
             {patient.given_name} {patient.family_name}
           </div>
-          <div className="text-[0.72rem] text-text-dim mt-0.5">
-            ZIP {patient.postal_code} · {patient.primary_language === "es" ? "Español" : "English"}
+          <div className="text-[0.72rem] text-text-dim mt-1.5 flex items-center gap-2">
+            <span>ZIP {patient.postal_code}</span>
+            <span className="bg-white/5 text-white/70 px-1.5 py-0.5 rounded text-[0.65rem] uppercase font-bold tracking-wider">
+              {typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi'
+                ? (patient.primary_language === "es" ? "Telugu" : "Hindi")
+                : (patient.primary_language === "es" ? "Español" : "English")}
+            </span>
+            <span className={`px-1.5 py-0.5 rounded text-[0.65rem] uppercase font-bold tracking-wider ${
+              score.top_head === 'respiratory' ? 'bg-amber/10 text-amber' : 
+              score.top_head === 'cardiovascular' ? 'bg-coral/10 text-coral' : 
+              'bg-purple/10 text-purple'
+            }`}>
+              {score.top_head} {score.top_head === 'respiratory' ? '🫁' : score.top_head === 'cardiovascular' ? '❤️' : '⚡'}
+            </span>
           </div>
         </div>
         <span
@@ -49,7 +61,7 @@ export function PatientCard({
         </span>
       </div>
       <div className="text-[0.72rem] text-text-dim mb-2">
-        {PATIENT_CONDITION[patient.id] ?? "COPD"}
+        {getPatientCondition(patient.id) ?? "COPD"}
       </div>
       <div className="flex items-center gap-3">
         <div className="flex-1 h-1.5 rounded-full bg-white/[0.05] overflow-hidden">

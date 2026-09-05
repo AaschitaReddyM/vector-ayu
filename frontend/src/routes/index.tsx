@@ -17,18 +17,13 @@ export const Route = createFileRoute("/")({
 });
 
 const HOSPITALS = [
-  { id: "parkland", name: "Parkland Health — Dallas" },
-  { id: "utsw", name: "UT Southwestern Medical Center" },
-  { id: "baylor", name: "Baylor Scott & White Health" },
-  { id: "texashealth", name: "Texas Health Resources" },
+  { id: "parkland", name: "Parkland Health — Dallas, TX", region: "dallas", docName: "Dr. Amara Okafor, MD", docRole: "Pulmonology & Internal Medicine", docLoc: "Dallas, Texas" },
+  { id: "aiims", name: "AIIMS — New Delhi", region: "new_delhi", docName: "Dr. Rohini Desai, MD", docRole: "Pulmonology & Internal Medicine", docLoc: "New Delhi, India" },
 ];
 
 const STEPS = [
   { label: "Establishing secure OAuth 2.0 tunnel...", sub: "TLS 1.3 handshake · 256-bit AES" },
-  {
-    label: "Authenticating provider credentials...",
-    sub: "Provider DR-AMO-2847 · Scope: patient/*.read",
-  },
+  { label: "Authenticating Provider ID...", sub: "Verifying IAM roles & permissions" },
   { label: "Loading FHIR Resources...", sub: "2,847 patients · 48,291 observations synced" },
   { label: "Launching Vector-AYU Layer...", sub: "Multi-Task AI · 3 prediction heads active" },
 ];
@@ -37,6 +32,29 @@ function LoginPage() {
   const navigate = useNavigate();
   const [connecting, setConnecting] = useState(false);
   const [step, setStep] = useState(-1);
+  const [selectedHospital, setSelectedHospital] = useState(HOSPITALS[0]);
+  const [terminalLines, setTerminalLines] = useState<string[]>([]);
+
+  useEffect(() => {
+    setTerminalLines([]);
+    const lines = [
+      `> Initializing Google Vertex AI cluster...`,
+      `> Syncing ${selectedHospital.region === "dallas" ? "42,109" : "89,442"} HL7 FHIR records...`,
+      `> Loading Temporal Fusion Transformer weights...`,
+      `> Establishing connection to Maps Air Quality API...`,
+      `> Ready for SMART on FHIR launch.`
+    ];
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      if (currentIndex < lines.length) {
+        setTerminalLines(prev => [...prev, lines[currentIndex]]);
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 600); // 600ms per line
+    return () => clearInterval(interval);
+  }, [selectedHospital]);
 
   useEffect(() => {
     if (!connecting) return;
@@ -46,7 +64,15 @@ function LoginPage() {
     });
     timers.push(
       setTimeout(
-        () => {
+        async () => {
+          // Call the backend to set the region and reset the session
+          await fetch("http://127.0.0.1:8000/api/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ region: selectedHospital.region }),
+          });
+          
+          localStorage.setItem("vayu_region", selectedHospital.region);
           signIn();
           navigate({ to: "/dashboard" });
         },
@@ -54,7 +80,7 @@ function LoginPage() {
       ),
     );
     return () => timers.forEach(clearTimeout);
-  }, [connecting, navigate]);
+  }, [connecting, navigate, selectedHospital]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-5 py-10">
@@ -85,11 +111,11 @@ function LoginPage() {
 
       <div className="relative z-10 w-full max-w-[520px] animate-fade-up">
         {/* Hero */}
-        <div className="text-center mb-10">
+        <div className="flex items-center gap-6 mb-10">
           <Dialog>
             <DialogTrigger asChild>
-              <div className="w-28 h-28 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-white border border-teal/30 shadow-[0_8px_40px_rgba(0,212,170,0.2)] hover:scale-105 hover:shadow-[0_12px_50px_rgba(0,212,170,0.3)] transition-all cursor-pointer group">
-                <img src="/logo.png" alt="Vector-AYU Logo" className="w-24 h-24 object-contain group-hover:scale-110 transition-transform duration-300" />
+              <div className="w-32 h-32 flex-shrink-0 rounded-[1.2rem] flex items-center justify-center bg-white border border-teal/30 shadow-[0_12px_45px_rgba(0,212,170,0.25)] hover:scale-105 hover:shadow-[0_16px_60px_rgba(0,212,170,0.35)] transition-all cursor-pointer group">
+                <img src="/logo.png" alt="Vector-AYU Logo" className="w-28 h-28 object-contain group-hover:scale-110 transition-transform duration-300" />
               </div>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px] border-border bg-card/95 backdrop-blur-xl flex justify-center items-center p-12">
@@ -97,10 +123,12 @@ function LoginPage() {
               <img src="/logo.png" alt="Vector-AYU Logo Large" className="w-full max-w-[400px] object-contain drop-shadow-2xl" />
             </DialogContent>
           </Dialog>
-          <h1 className="text-[2.5rem] font-extrabold tracking-tight text-gradient-brand">
-            Vector-AYU
-          </h1>
-          <p className="text-text-dim mt-2 text-sm">Population Health Intelligence · DFW Metro</p>
+          <div className="flex flex-col">
+            <h1 className="text-[3rem] font-extrabold tracking-tight text-gradient-brand leading-[1.1]">
+              Vector-AYU
+            </h1>
+            <p className="text-text-dim mt-2 text-[1rem] ml-[3px]">Climate-Responsive Care Triage</p>
+          </div>
         </div>
 
         {/* Card */}
@@ -109,10 +137,26 @@ function LoginPage() {
             <span className="w-2 h-2 rounded-full bg-teal animate-pulse-dot" />
             SMART on FHIR Launch Sequence
           </div>
-
           <div className="space-y-4">
+            {/* Regional Threat Indicator */}
+            <div className="bg-coral/10 border border-coral/20 rounded-xl p-3 flex items-start gap-3 animate-fade-up">
+              <span className="text-coral text-lg leading-none mt-0.5">⚠️</span>
+              <div>
+                <div className="text-[0.75rem] font-bold text-coral">
+                  {selectedHospital.region === "dallas" ? "Dallas, TX: AQI 165 (Wildfire Plume)" : "New Delhi: AQI 340 (Stubble Smog)"}
+                </div>
+                <div className="text-[0.7rem] text-coral/80 mt-0.5">
+                  {selectedHospital.region === "dallas" ? "847" : "1,201"} patients at critical risk. Launch to triage.
+                </div>
+              </div>
+            </div>
+
             <Field label="Hospital System">
-              <select className="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-border text-foreground text-sm focus:outline-none focus:border-teal transition">
+              <select 
+                className="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-border text-foreground text-sm focus:outline-none focus:border-teal transition"
+                value={selectedHospital.id}
+                onChange={(e) => setSelectedHospital(HOSPITALS.find(h => h.id === e.target.value) || HOSPITALS[0])}
+              >
                 {HOSPITALS.map((h) => (
                   <option key={h.id} value={h.id}>
                     {h.name}
@@ -120,48 +164,69 @@ function LoginPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Provider ID">
-              <input
-                readOnly
-                value="DR-AMO-2847"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-surface border border-border text-teal text-sm font-medium"
-              />
-            </Field>
+
+            {/* Live Terminal Stream */}
+            <div className="h-[120px] bg-black/60 border border-border/50 rounded-lg p-3 font-mono text-[0.7rem] text-teal overflow-hidden flex flex-col justify-start relative shadow-inner">
+              <div className="flex flex-col gap-1.5 opacity-90">
+                {terminalLines.map((line, idx) => (
+                  <div key={idx} className="animate-fade-up">{line}</div>
+                ))}
+                {/* Blinking cursor */}
+                {terminalLines.length < 5 && (
+                  <div className="w-2 h-3.5 bg-teal mt-1 animate-pulse" />
+                )}
+              </div>
+            </div>
 
             <div className="bg-white/[0.02] border border-border rounded-xl p-4 flex items-center gap-3">
               <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-[#0a0f1e] bg-gradient-to-br from-teal to-blue">
-                AO
+                {selectedHospital.region === "dallas" ? "AO" : "RD"}
               </div>
               <div>
-                <div className="font-semibold text-sm">Dr. Amara Okafor, MD</div>
-                <div className="text-[0.72rem] text-teal">Pulmonology & Internal Medicine</div>
+                <div className="font-semibold text-sm">{selectedHospital.docName}</div>
+                <div className="text-[0.72rem] text-teal">{selectedHospital.docRole}</div>
                 <div className="text-[0.7rem] text-text-muted">
-                  Parkland Health — DFW Metro Network
+                  {selectedHospital.name.split('—')[0].trim()} — {selectedHospital.docLoc}
                 </div>
               </div>
             </div>
 
             <button
-              onClick={() => setConnecting(true)}
+              onClick={() => {
+                setConnecting(true);
+              }}
               disabled={connecting}
-              className="relative w-full px-4 py-3.5 rounded-xl text-[0.95rem] font-bold text-[#0a0f1e] bg-gradient-to-r from-teal to-[#00b894] hover:shadow-[0_8px_30px_rgba(0,212,170,0.4)] transition-all disabled:opacity-60 disabled:cursor-not-allowed overflow-hidden"
+              className="relative w-full px-4 py-3.5 rounded-xl text-[0.95rem] font-bold text-[#0a0f1e] bg-gradient-to-r from-teal to-[#00b894] hover:shadow-[0_8px_30px_rgba(0,212,170,0.4)] transition-all disabled:opacity-80 disabled:cursor-not-allowed overflow-hidden group"
             >
-              {connecting ? "Connecting…" : "Connect via SMART on FHIR"}
+              {/* Scanning laser effect */}
+              {connecting && <div className="absolute inset-0 bg-white/20 w-[10%] animate-scan-laser skew-x-12" />}
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                {connecting ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-[#0a0f1e]/30 border-t-[#0a0f1e] rounded-full animate-spin" />
+                    Authenticating & Launching...
+                  </>
+                ) : "Launch Biometric Auth"}
+              </span>
             </button>
 
             <div className="grid grid-cols-2 gap-2 pt-2">
               {[
+                { i: "☁️", l: "Powered by Google Cloud" },
+                { i: "🧠", l: "Vertex AI Native" },
                 { i: "🛡️", l: "HIPAA Compliant" },
-                { i: "🔒", l: "SOC 2 Type II" },
-                { i: "🔐", l: "TLS 1.3 Encrypted" },
                 { i: "🏥", l: "HL7 FHIR v4" },
               ].map((b) => (
                 <div
                   key={b.l}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.02] border border-border text-[0.7rem] text-text-dim"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[0.7rem] ${
+                    b.l.includes('Google') || b.l.includes('Vertex') 
+                      ? 'bg-blue/10 border-blue/30 text-blue font-semibold shadow-[0_0_10px_rgba(78,168,222,0.15)]' 
+                      : 'bg-white/[0.02] border-border text-text-dim'
+                  }`}
                 >
                   <span>{b.i}</span>
-                  <span className="font-medium">{b.l}</span>
+                  <span className={b.l.includes('Google') || b.l.includes('Vertex') ? '' : 'font-medium'}>{b.l}</span>
                 </div>
               ))}
             </div>

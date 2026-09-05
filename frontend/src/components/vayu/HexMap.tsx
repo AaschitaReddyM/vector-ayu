@@ -3,7 +3,8 @@ import { MapContainer, TileLayer, CircleMarker, Tooltip } from "react-leaflet";
 import { MOCK_PATIENTS, MOCK_RISK_SCORES } from "@/lib/mock-data";
 
 export function HexMapPlaceholder() {
-  const center: [number, number] = [32.7767, -96.797]; // Dallas, TX
+  const isNewDelhi = typeof window !== "undefined" && localStorage.getItem("vayu_region") === "new_delhi";
+  const center: [number, number] = isNewDelhi ? [28.6139, 77.2090] : [32.7767, -96.797];
 
   // Generate random lat/lng around DFW for our mock patients based on their index
   // so the markers are stable between renders
@@ -19,8 +20,17 @@ export function HexMapPlaceholder() {
         : 0.1;
 
       let color = "#00d4aa"; // low risk
-      if (risk > 0.6) color = "#ffb347"; // medium
-      if (risk > 0.8) color = "#ff6b6b"; // high
+      if (isNewDelhi) {
+        // Toxic AQI gradient for New Delhi
+        color = "#ffb347"; // Yellow (Unhealthy for sensitive)
+        if (risk > 0.6) color = "#ff6b6b"; // Red (Unhealthy)
+        if (risk > 0.8) color = "#9b5de5"; // Deep Purple (Severe/Hazardous)
+      } else {
+        // Heat/Wildfire gradient for Dallas
+        color = "#00d4aa"; // Teal (Good)
+        if (risk > 0.6) color = "#ffb347"; // Amber (Elevated)
+        if (risk > 0.8) color = "#ff6b6b"; // Coral (High)
+      }
 
       return {
         id: p.id,
@@ -31,7 +41,7 @@ export function HexMapPlaceholder() {
         color: color,
       };
     });
-  }, []);
+  }, [center]);
 
   return (
     <div className="relative w-full h-[350px] rounded-[14px] overflow-hidden border border-border">

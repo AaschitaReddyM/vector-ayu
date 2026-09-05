@@ -14,9 +14,16 @@ import {
 export const patientsQuery = queryOptions({
   queryKey: ["patients"],
   queryFn: async (): Promise<Patient[]> => {
-    if (!isSupabaseConfigured || !supabase) return MOCK_PATIENTS;
+    let pts = MOCK_PATIENTS;
+    if (typeof window !== "undefined") {
+        const isNewDelhi = localStorage.getItem("vayu_region") === "new_delhi";
+        if (isNewDelhi) pts = MOCK_PATIENTS.slice(12, 24);
+        else pts = MOCK_PATIENTS.slice(0, 12);
+    }
+    
+    if (!isSupabaseConfigured || !supabase) return pts;
     const { data, error } = await supabase.from("patients").select("*");
-    if (error || !data || data.length === 0) return MOCK_PATIENTS;
+    if (error || !data || data.length === 0) return pts;
     return data as Patient[];
   },
 });
@@ -69,7 +76,43 @@ export const riskScoreQuery = (patientId: string) =>
 export const triageQuery = queryOptions({
   queryKey: ["triage_queue"],
   queryFn: async (): Promise<TriageEntry[]> => {
-    if (!isSupabaseConfigured || !supabase) return MOCK_TRIAGE;
+    if (!isSupabaseConfigured || !supabase) {
+      // Fetch from local FastAPI backend
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+        const res = await fetch(`${apiUrl}/api/triage/queue`);
+        if (res.ok) {
+          const data = await res.json();
+          const entries: TriageEntry[] = [];
+          data.accepted.forEach((f: any) => {
+            entries.push({
+              id: `tq-${f.patient_id}`,
+              patient_id: f.patient_id,
+              risk_total: Math.round(f.risk_total * 100),
+              head: f.head,
+              status: "accepted",
+              triage_date: new Date().toISOString()
+            });
+          });
+          data.deferred.forEach((f: any) => {
+            entries.push({
+              id: `tq-${f.patient_id}`,
+              patient_id: f.patient_id,
+              risk_total: Math.round(f.risk_total * 100),
+              head: f.head,
+              status: "deferred",
+              triage_date: new Date().toISOString()
+            });
+          });
+          // Also patch in the combined_delta from riskScores to match the frontend expectations?
+          // The frontend dashboard relies on scores.combined_delta. 
+          return entries;
+        }
+      } catch (err) {
+        console.error("Failed to fetch triage queue from backend, falling back to static mock", err);
+      }
+      return MOCK_TRIAGE;
+    }
     const { data, error } = await supabase
       .from("triage_queue")
       .select("*")

@@ -4,11 +4,11 @@ from typing import List, Optional
 
 from pre_build.api.schemas import (
     PatientSchema, PatientDetailResponse, RunPipelineResponse,
-    TriageDecisionResponse,
+    TriageDecisionResponse, SimulationOverrides,
     RiskScoreRecord, TriageRecord, OutreachLogRecord
 )
 from pre_build.api.services import (
-    get_all_patients, get_patient_detail, run_patient_pipeline, get_triage_queue
+    get_all_patients, get_patient_detail, run_patient_pipeline, get_triage_queue, run_autonomous_cron, reset_triage_and_set_region
 )
 from pre_build.db import repository
 
@@ -42,10 +42,10 @@ def patient_details(patient_id: str):
         raise HTTPException(status_code=404, detail="Patient not found")
 
 @app.post("/api/pipeline/run/{patient_id}", response_model=RunPipelineResponse)
-def trigger_pipeline(patient_id: str):
+def trigger_pipeline(patient_id: str, anomaly_type: Optional[str] = None, overrides: Optional[SimulationOverrides] = None):
     """Run the VAYU 7-stage pipeline for a given patient."""
     try:
-        return run_patient_pipeline(patient_id)
+        return run_patient_pipeline(patient_id, anomaly_type, overrides)
     except KeyError:
         raise HTTPException(status_code=404, detail="Patient not found")
 
@@ -59,6 +59,24 @@ def triage_queue():
         "capacity_used": decision.capacity_used,
         "capacity_remaining": decision.capacity_remaining
     }
+
+from pydantic import BaseModel
+class SessionRequest(BaseModel):
+    region: str
+
+@app.post("/api/session")
+def set_session(req: SessionRequest):
+    """Reset the mock triage flags and set the region (dallas or new_delhi)"""
+    reset_triage_and_set_region(req.region)
+    return {"status": "ok", "region": req.region}
+
+@app.post("/api/cron/scan-climate")
+def trigger_autonomous_cron(anomaly_type: Optional[str] = None):
+    """Simulate a Google Cloud Scheduler hitting this endpoint every hour."""
+    try:
+        return run_autonomous_cron(anomaly_type)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ---------------------------------------------------------------------------

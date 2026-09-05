@@ -21,9 +21,82 @@ const STEPS = [
   { icon: "📋", label: "Logged in EHR" },
 ];
 
-const MESSAGES: Record<string, string> = {
-  en: "Air quality in the Dallas metro area is expected to worsen over the next 48 hours due to elevated ozone and particulate levels. If you have a respiratory condition, we recommend limiting outdoor activity (especially 2–6 PM), keeping rescue inhaler accessible, running AC indoors, and contacting your care team if symptoms worsen. — Your Vector-AYU Care Team",
-  es: "Se espera que la calidad del aire en el área metropolitana de Dallas empeore durante las próximas 48 horas debido a niveles elevados de ozono y partículas. Si tiene una condición respiratoria: limite la actividad al aire libre (especialmente 2–6 PM), mantenga su inhalador de rescate accesible, use aire acondicionado en interiores, y comuníquese con su equipo de atención si los síntomas empeoran. — Su equipo Vector-AYU",
+const getCampaigns = () => {
+  const isNewDelhi = typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi';
+  
+  if (isNewDelhi) {
+    return [
+      {
+        id: "track_a",
+        name: "Stubble Smog Advisory — Respiratory Panel",
+        trigger: "AQI >150 + Stubble Burning",
+        population: "847 patients (Track A)",
+        track: "A",
+        messages: {
+          en: "Air quality in the NCR region is expected to worsen over the next 48 hours due to stubble smoke. If you have a respiratory condition, we recommend keeping air purifiers on max, limiting outdoor activity, keeping your rescue inhaler accessible, and contacting your care team if symptoms worsen. — Your Vector-AYU Care Team",
+          es: "NCR ప్రాంతంలో గాలి నాణ్యత క్షీణించే అవకాశం ఉంది. మీకు శ్వాసకోశ సమస్యలు ఉంటే దయచేసి ఇంట్లోనే ఉండండి. — మీ Vector-AYU కేర్ టీమ్", // Telugu
+        }
+      },
+      {
+        id: "track_b",
+        name: "Pre-Monsoon Heatwave — Cardiovascular Panel",
+        trigger: "Heat >45°C + High Humidity",
+        population: "612 patients (Track B)",
+        track: "B",
+        messages: {
+          en: "Extreme heat is expected in New Delhi over the next 48 hours. If you have a heart condition or high blood pressure, extreme heat forces your heart to work harder. We strongly advise staying in cooled environments, drinking plenty of water, and monitoring for swelling or dizziness. — Your Vector-AYU Care Team",
+          es: "नई दिल्ली में अत्यधिक गर्मी की उम्मीद है। यदि आपको हृदय रोग है, तो कृपया ठंडे वातावरण में रहें और बहुत सारा पानी पिएं। — आपकी Vector-AYU केयर टीम", // Hindi
+        }
+      },
+      {
+        id: "track_c",
+        name: "Monsoon Flash Flooding — Metabolic Panel",
+        trigger: "Heavy Rainfall + Power Outage",
+        population: "438 patients (Track C)",
+        track: "C",
+        messages: {
+          en: "Heavy monsoon rains and potential flooding are expected in New Delhi. If you manage diabetes, ensure you have backup power for your insulin fridge and stock up on necessary supplies. Keep emergency contacts handy. — Your Vector-AYU Care Team",
+          es: "नई दिल्ली में भारी मानसूनी बारिश की उम्मीद है। यदि आप मधुमेह के रोगी हैं, तो कृपया अपने इंसुलिन के लिए बैकअप पावर सुनिश्चित करें। — आपकी Vector-AYU केयर टीम", // Hindi
+        }
+      }
+    ];
+  }
+
+  return [
+    {
+      id: "track_a",
+      name: "Heat Advisory — Respiratory Panel",
+      trigger: "AQI >150 + Heat >100°F",
+      population: "847 patients (Track A)",
+      track: "A",
+      messages: {
+        en: "Air quality in the Dallas metro area is expected to worsen over the next 48 hours due to elevated ozone and particulate levels. If you have a respiratory condition, we recommend limiting outdoor activity (especially 2–6 PM), keeping rescue inhaler accessible, running AC indoors, and contacting your care team if symptoms worsen. — Your Vector-AYU Care Team",
+        es: "Se espera que la calidad del aire en el área metropolitana de Dallas empeore durante las próximas 48 horas debido a niveles elevados de ozono y partículas. Si tiene una condición respiratoria: limite la actividad al aire libre, mantenga su inhalador accesible, use aire acondicionado, y comuníquese con su equipo si los síntomas empeoran. — Su equipo Vector-AYU",
+      }
+    },
+    {
+      id: "track_b",
+      name: "Extreme Heat — Cardiovascular Panel",
+      trigger: "Heat >100°F + High Humidity",
+      population: "612 patients (Track B)",
+      track: "B",
+      messages: {
+        en: "Extreme heat is expected in Dallas over the next 48 hours. If you have a heart condition or high blood pressure, extreme heat forces your heart to work harder. We strongly advise staying in air-conditioned environments, drinking plenty of water (unless on fluid restriction), and monitoring for swelling or dizziness. — Your Vector-AYU Care Team",
+        es: "Se espera calor extremo en Dallas. Si tiene una afección cardíaca o presión arterial alta, el calor extremo obliga a su corazón a trabajar más. Recomendamos permanecer en ambientes con aire acondicionado, beber mucha agua y controlar la hinchazón o mareos. — Su equipo Vector-AYU",
+      }
+    },
+    {
+      id: "track_c",
+      name: "Extreme Heat — Metabolic Panel",
+      trigger: "Heat >100°F",
+      population: "438 patients (Track C)",
+      track: "C",
+      messages: {
+        en: "Extreme heat is expected in Dallas over the next 48 hours. If you manage diabetes, remember that heat can cause unpredictable blood sugar spikes and can degrade insulin. Do not leave medication in a hot car, stay hydrated, and protect your feet from hot pavement. — Your Vector-AYU Care Team",
+        es: "Se espera calor extremo en Dallas. Si controla la diabetes, recuerde que el calor puede causar picos impredecibles de azúcar en la sangre y degradar la insulina. No deje medicamentos en el auto caliente, manténgase hidratado y proteja sus pies. — Su equipo Vector-AYU",
+      }
+    }
+  ];
 };
 
 function OutreachPage() {
@@ -31,30 +104,54 @@ function OutreachPage() {
   const qc = useQueryClient();
   const [step, setStep] = useState(2);
   const [lang, setLang] = useState<"en" | "es">("en");
-  const [approved, setApproved] = useState(false);
+  const CAMPAIGNS = getCampaigns();
+  const [activeCampaignIdx, setActiveCampaignIdx] = useState(0);
+  const activeCampaign = CAMPAIGNS[activeCampaignIdx];
+  // Track approval per campaign so they can send both
+  const [approvedCampaigns, setApprovedCampaigns] = useState<Record<string, boolean>>({});
 
   const approveMut = useMutation({
     mutationFn: async () => {
       await insertOutreach({
-        patient_id: "TX-301500",
-        track: "A",
-        message_content: MESSAGES[lang],
+        patient_id: `TX-COHORT-${activeCampaign.track}`,
+        track: activeCampaign.track as any,
+        message_content: activeCampaign.messages[lang],
       });
     },
     onSuccess: () => {
-      setApproved(true);
+      setApprovedCampaigns(prev => ({ ...prev, [activeCampaign.id]: true }));
       setStep(4);
+      localStorage.setItem("vayu_consumer_sms", activeCampaign.messages[lang]);
+      window.dispatchEvent(new Event("vayu_sms_update"));
       qc.invalidateQueries({ queryKey: ["outreach_logs"] });
     },
   });
 
+  const isApproved = approvedCampaigns[activeCampaign.id];
+
   return (
     <div className="max-w-[1320px] mx-auto px-7 py-7 flex flex-col gap-6">
-      <div className="animate-fade-up">
-        <h1 className="text-[1.7rem] font-extrabold tracking-tight">48-Hour Approve & Release</h1>
-        <p className="text-[0.88rem] text-text-dim mt-1.5">
-          Review AI-generated outreach campaigns and approve for delivery to consented patients.
-        </p>
+      <div className="animate-fade-up flex items-start justify-between">
+        <div>
+          <h1 className="text-[1.7rem] font-extrabold tracking-tight">48-Hour Approve & Release</h1>
+          <p className="text-[0.88rem] text-text-dim mt-1.5">
+            Review AI-generated outreach campaigns and approve for delivery to consented patients.
+          </p>
+        </div>
+        <div>
+          <select 
+            className="px-4 py-2 bg-surface border border-border rounded-lg focus:outline-none focus:border-teal font-semibold"
+            value={activeCampaignIdx}
+            onChange={(e) => {
+              setActiveCampaignIdx(Number(e.target.value));
+              setStep(approvedCampaigns[CAMPAIGNS[Number(e.target.value)].id] ? 4 : 2);
+            }}
+          >
+            {CAMPAIGNS.map((c, i) => (
+              <option key={c.id} value={i}>{c.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <StepperCard>
@@ -66,10 +163,10 @@ function OutreachPage() {
         <section className="bg-card border border-border rounded-[14px] p-6 animate-fade-up">
           <h2 className="text-[1rem] font-bold mb-5">📢 Campaign Details</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <Detail label="Campaign" value="Heat Advisory — Respiratory Panel" full />
+            <Detail label="Campaign" value={activeCampaign.name} full />
             <Detail label="Generated By" value="Vector-AYU AI Worker" />
-            <Detail label="Trigger" value="AQI >150 + Heat >100°F" />
-            <Detail label="Target Population" value="847 patients (Track A)" />
+            <Detail label="Trigger" value={activeCampaign.trigger} />
+            <Detail label="Target Population" value={activeCampaign.population} />
             <Detail label="Channel" value={<Tag color="teal">SMS</Tag>} />
             <Detail label="Priority" value={<Tag color="coral">Critical</Tag>} />
           </div>
@@ -90,16 +187,16 @@ function OutreachPage() {
           </div>
           <button
             onClick={() => approveMut.mutate()}
-            disabled={approved || approveMut.isPending}
+            disabled={isApproved || approveMut.isPending}
             className={`w-full px-5 py-3.5 rounded-xl font-bold text-[0.95rem] transition-all flex items-center justify-center gap-2 ${
-              approved
+              isApproved
                 ? "bg-teal/20 text-teal border border-teal cursor-default"
                 : "bg-gradient-to-r from-teal to-[#00b894] text-[#0a0f1e] hover:shadow-[0_8px_30px_rgba(0,212,170,0.4)] hover:-translate-y-px"
             }`}
           >
-            {approved ? (
+            {isApproved ? (
               <>
-                <Check className="w-5 h-5" /> Approved · Sent to 847 patients
+                <Check className="w-5 h-5" /> Approved · Sent to {activeCampaign.population.split(" ")[0]} patients
               </>
             ) : approveMut.isPending ? (
               "Sending..."
@@ -110,7 +207,7 @@ function OutreachPage() {
           <div className="mt-4 px-4 py-3 rounded-lg bg-blue/[0.06] border border-blue/15 text-[0.78rem] text-blue flex items-start gap-2.5">
             <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <span>
-              FHIR Progress Note will be automatically documented for all 847 patients upon delivery
+              FHIR Progress Note will be automatically documented for all {activeCampaign.population.split(" ")[0]} patients upon delivery
               confirmation.
             </span>
           </div>
@@ -146,7 +243,7 @@ function OutreachPage() {
             </div>
           </div>
           <div className="mt-3 p-4 rounded-2xl bg-teal/[0.06] border border-teal/15 text-[0.82rem] leading-relaxed">
-            {MESSAGES[lang]}
+            {activeCampaign.messages[lang]}
           </div>
           <div className="text-[0.66rem] text-text-muted text-right mt-2">Today, 2:24 PM CDT</div>
         </div>
