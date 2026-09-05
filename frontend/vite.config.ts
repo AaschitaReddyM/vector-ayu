@@ -13,6 +13,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    preview: {
+      allowedHosts: true,
+    },
     server: {
       proxy: {
         "/api": {
