@@ -344,7 +344,7 @@ function PatientDetail() {
                 <span className="font-semibold text-text">Prophylactic Inhaler Refill</span>
                 <span className="text-[0.75rem] text-text-dim">
                   {typeof window !== 'undefined' && localStorage.getItem('vayu_region') === 'new_delhi' 
-                    ? 'Apollo Pharmacy via Swiggy Genie' 
+                    ? 'Apollo Pharmacy via Swiggy Genie / Dunzo' 
                     : 'CVS Pharmacy via UberHealth'}
                 </span>
               </div>
