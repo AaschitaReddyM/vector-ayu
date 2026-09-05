@@ -79,7 +79,7 @@ export const triageQuery = queryOptions({
     if (!isSupabaseConfigured || !supabase) {
       // Fetch from local FastAPI backend
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+        const apiUrl = import.meta.env.VITE_API_URL || "https://vector-ayu-213260234201.us-central1.run.app";
         const res = await fetch(`${apiUrl}/api/triage/queue`);
         if (res.ok) {
           const data = await res.json();

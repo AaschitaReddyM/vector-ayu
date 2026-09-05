@@ -77,7 +77,7 @@ function DashboardPage() {
               e.preventDefault();
               try {
                 toast.loading("Running ML Pipeline...", { id: "sim" });
-                const apiUrl = import.meta.env.VITE_API_URL || "";
+                const apiUrl = import.meta.env.VITE_API_URL || "https://vector-ayu-213260234201.us-central1.run.app";
                 
                 const payload: any = {};
                 if (showSandbox) {
@@ -125,7 +125,7 @@ function DashboardPage() {
               e.preventDefault();
               try {
                 toast.loading("Simulating Cloud Scheduler (Live)...", { id: "cron" });
-                const apiUrl = import.meta.env.VITE_API_URL || "";
+                const apiUrl = import.meta.env.VITE_API_URL || "https://vector-ayu-213260234201.us-central1.run.app";
                 const res = await fetch(`${apiUrl}/api/cron/scan-climate`, {
                   method: "POST",
                 });
@@ -173,7 +173,7 @@ function DashboardPage() {
                 e.preventDefault();
                 try {
                   toast.loading(`Simulating ${anomalyType} anomaly (DANGER)...`, { id: "cron" });
-                  const apiUrl = import.meta.env.VITE_API_URL || "";
+                  const apiUrl = import.meta.env.VITE_API_URL || "https://vector-ayu-213260234201.us-central1.run.app";
                   const res = await fetch(`${apiUrl}/api/cron/scan-climate?anomaly_type=${anomalyType}`, {
                     method: "POST",
                   });

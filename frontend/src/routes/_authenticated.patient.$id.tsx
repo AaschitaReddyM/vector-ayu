@@ -99,7 +99,7 @@ function PatientDetail() {
               e.preventDefault();
               try {
                 toast.loading("Running Pipeline...", { id: "sim2" });
-                const apiUrl = import.meta.env.VITE_API_URL || "";
+                const apiUrl = import.meta.env.VITE_API_URL || "https://vector-ayu-213260234201.us-central1.run.app";
                 const res = await fetch(`${apiUrl}/api/pipeline/run/${patient.id}`, {
                   method: "POST",
                 });

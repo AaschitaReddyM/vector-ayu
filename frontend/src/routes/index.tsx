@@ -65,12 +65,16 @@ function LoginPage() {
     timers.push(
       setTimeout(
         async () => {
-          // Call the backend to set the region and reset the session
-          await fetch("http://127.0.0.1:8000/api/session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ region: selectedHospital.region }),
-          });
+          const apiUrl = import.meta.env.VITE_API_URL || "https://vector-ayu-213260234201.us-central1.run.app";
+          try {
+            await fetch(`${apiUrl}/api/session`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ region: selectedHospital.region }),
+            });
+          } catch (e) {
+            console.warn("Session init warning:", e);
+          }
           
           localStorage.setItem("vayu_region", selectedHospital.region);
           signIn();
