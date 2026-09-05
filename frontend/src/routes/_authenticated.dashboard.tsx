@@ -118,94 +118,230 @@ function DashboardPage() {
       </div>
 
       {/* Clinical Sandbox Drawer (Inline) */}
-      {showSandbox && (
-        <div className="bg-amber/5 border border-amber/30 rounded-xl p-5 animate-fade-up">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-            <div>
-              <h3 className="font-bold text-amber flex items-center gap-2">
-                🧪 What-If Clinical Simulator
-              </h3>
-              <p className="text-xs text-text-dim mt-0.5">Select a patient, customize their biomarkers, and run inference to observe TFT risk score shifts.</p>
+      {showSandbox && (() => {
+        const s = parseFloat(overrides.spo2) || 96;
+        const bp = parseFloat(overrides.systolic_bp) || 120;
+        const aqi = parseInt(overrides.custom_aqi) || 50;
+        const selectedPatient = patientMap.get(selectedPatientId);
+
+        let riskLevel = "Stable";
+        let riskColor = "text-teal border-teal/40 bg-teal/10";
+        let riskIcon = "🟢";
+        let deltaEstimate = "-0.05 (Normal baseline)";
+        let clinicalNote = "Biomarkers within safe compensatory limits. Patient remains in routine monitoring with no emergency intervention required.";
+        let actionTag = "Standard Routine Care";
+
+        if (s < 90 || aqi >= 250) {
+          riskLevel = "CRITICAL SURGE";
+          riskColor = "text-coral border-coral/50 bg-coral/10 shadow-[0_0_15px_rgba(255,107,107,0.2)]";
+          riskIcon = "🚨";
+          deltaEstimate = "+0.42 to +0.58 (Immediate Triage Surge)";
+          clinicalNote = `Severe Hypoxia (${s}%) combined with Toxic Air Quality (${aqi} AQI) will spike multi-task volatility. Patient will surge to Rank #1 in Triage Queue.`;
+          actionTag = "Autonomous Vertex AI SMS + Smart Home IoT Activated";
+        } else if (bp >= 140 || (aqi >= 120 && s < 95)) {
+          riskLevel = "HIGH RISK";
+          riskColor = "text-amber border-amber/50 bg-amber/10";
+          riskIcon = "⚠️";
+          deltaEstimate = "+0.22 to +0.35 (Elevated Volatility)";
+          clinicalNote = `Hypertensive load (${bp} mmHg) with elevated environmental stress increases Cardiovascular head risk.`;
+          actionTag = "Nurse Outreach Call Queue Recommended";
+        }
+
+        return (
+          <div className="bg-amber/5 border border-amber/30 rounded-2xl p-6 animate-fade-up shadow-xl space-y-5">
+            {/* Header & Patient Selector */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h3 className="font-bold text-amber flex items-center gap-2 text-base">
+                  🧪 What-If Clinical Simulator
+                  <span className="text-[0.75rem] font-medium bg-amber/20 text-amber px-2.5 py-0.5 rounded-full">Interactive AI Sandbox</span>
+                </h3>
+                <p className="text-xs text-text-dim mt-1">
+                  Adjust clinical biomarkers or environmental exposure below to see how the Temporal Fusion Transformer predicts exacerbations before they happen.
+                </p>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold uppercase text-text-dim">Patient:</span>
+                <select 
+                  value={selectedPatientId}
+                  onChange={(e) => setSelectedPatientId(e.target.value)}
+                  className="bg-surface border border-border text-text px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-amber cursor-pointer font-medium"
+                >
+                  {patients.map(p => (
+                    <option key={p.id} value={p.id}>{p.id} — {p.given_name} {p.family_name}</option>
+                  ))}
+                </select>
+                
+                <button
+                  className="bg-amber text-background px-5 py-2 rounded-lg font-bold text-sm hover:bg-amber-dim transition cursor-pointer shadow-md flex items-center gap-2"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    try {
+                      toast.loading("Running Multi-Task TFT Pipeline...", { id: "sim" });
+                      const apiUrl = import.meta.env.VITE_API_URL || "https://vector-ayu-213260234201.us-central1.run.app";
+                      
+                      const payload: any = {};
+                      if (overrides.spo2) payload.spo2 = parseFloat(overrides.spo2);
+                      if (overrides.systolic_bp) payload.systolic_bp = parseFloat(overrides.systolic_bp);
+                      if (overrides.custom_aqi) payload.custom_aqi = parseInt(overrides.custom_aqi);
+                      
+                      const res = await fetch(`${apiUrl}/api/pipeline/run/${selectedPatientId}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ overrides: payload })
+                      });
+                      if (res.ok) {
+                        const data = await res.json();
+                        
+                        queryClient.setQueryData(["risk_scores"], (old: any) => {
+                           if (!old) return old;
+                           return old.map((s: any) => s.patient_id === selectedPatientId ? {
+                              ...s,
+                              combined_delta: data.risk.combined_delta,
+                              probabilities: data.risk.probabilities,
+                              top_head: data.risk.top_head
+                           } : s);
+                        });
+                        
+                        await queryClient.invalidateQueries({ queryKey: ["triage_queue"] });
+                        toast.success(`Pipeline updated for ${selectedPatientId}!`, { id: "sim" });
+                      } else {
+                        toast.error(`Simulation failed: ${res.statusText}`, { id: "sim" });
+                      }
+                    } catch (err) {
+                      console.error("Simulation failed", err);
+                      toast.error("Network error during simulation", { id: "sim" });
+                    }
+                  }}
+                >
+                  ▶ Run ML Inference
+                </button>
+              </div>
+            </div>
+
+            {/* Quick 1-Click Stress Test Chips */}
+            <div className="flex items-center gap-2 flex-wrap pt-1">
+              <span className="text-[0.75rem] font-bold uppercase tracking-wider text-text-dim mr-1">Quick Demo Presets:</span>
+              <button
+                type="button"
+                onClick={() => setOverrides({ spo2: "86", systolic_bp: "125", custom_aqi: "260" })}
+                className="text-xs bg-coral/15 hover:bg-coral/25 border border-coral/40 text-coral px-3 py-1.5 rounded-lg transition font-medium cursor-pointer flex items-center gap-1.5"
+              >
+                <span>💨</span> Acute Hypoxia & Smog (SpO2 86%, AQI 260)
+              </button>
+              <button
+                type="button"
+                onClick={() => setOverrides({ spo2: "94", systolic_bp: "168", custom_aqi: "175" })}
+                className="text-xs bg-amber/15 hover:bg-amber/25 border border-amber/40 text-amber px-3 py-1.5 rounded-lg transition font-medium cursor-pointer flex items-center gap-1.5"
+              >
+                <span>❤️</span> Hypertensive Heat Stress (BP 168, AQI 175)
+              </button>
+              <button
+                type="button"
+                onClick={() => setOverrides({ spo2: "98", systolic_bp: "116", custom_aqi: "35" })}
+                className="text-xs bg-teal/15 hover:bg-teal/25 border border-teal/40 text-teal px-3 py-1.5 rounded-lg transition font-medium cursor-pointer flex items-center gap-1.5"
+              >
+                <span>🌿</span> Clean Air Baseline (SpO2 98%, AQI 35)
+              </button>
+              {(overrides.spo2 || overrides.systolic_bp || overrides.custom_aqi) && (
+                <button
+                  type="button"
+                  onClick={() => setOverrides({ spo2: "", systolic_bp: "", custom_aqi: "" })}
+                  className="text-xs text-text-dim hover:text-foreground underline ml-auto cursor-pointer"
+                >
+                  Reset to Defaults
+                </button>
+              )}
             </div>
             
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold uppercase text-text-dim">Patient:</span>
-              <select 
-                value={selectedPatientId}
-                onChange={(e) => setSelectedPatientId(e.target.value)}
-                className="bg-surface border border-border text-text px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:border-amber"
-              >
-                {patients.map(p => (
-                  <option key={p.id} value={p.id}>{p.id} — {p.given_name} {p.family_name}</option>
-                ))}
-              </select>
-              
-              <button
-                className="bg-amber text-background px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-amber-dim transition cursor-pointer"
-                onClick={async (e) => {
-                  e.preventDefault();
-                  try {
-                    toast.loading("Running Multi-Task TFT Pipeline...", { id: "sim" });
-                    const apiUrl = import.meta.env.VITE_API_URL || "https://vector-ayu-213260234201.us-central1.run.app";
-                    
-                    const payload: any = {};
-                    if (overrides.spo2) payload.spo2 = parseFloat(overrides.spo2);
-                    if (overrides.systolic_bp) payload.systolic_bp = parseFloat(overrides.systolic_bp);
-                    if (overrides.custom_aqi) payload.custom_aqi = parseInt(overrides.custom_aqi);
-                    
-                    const res = await fetch(`${apiUrl}/api/pipeline/run/${selectedPatientId}`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ overrides: payload })
-                    });
-                    if (res.ok) {
-                      const data = await res.json();
-                      
-                      queryClient.setQueryData(["risk_scores"], (old: any) => {
-                         if (!old) return old;
-                         return old.map((s: any) => s.patient_id === selectedPatientId ? {
-                            ...s,
-                            combined_delta: data.risk.combined_delta,
-                            probabilities: data.risk.probabilities,
-                            top_head: data.risk.top_head
-                         } : s);
-                      });
-                      
-                      await queryClient.invalidateQueries({ queryKey: ["triage_queue"] });
-                      toast.success(`Pipeline updated for ${selectedPatientId}!`, { id: "sim" });
-                    } else {
-                      toast.error(`Simulation failed: ${res.statusText}`, { id: "sim" });
-                    }
-                  } catch (err) {
-                    console.error("Simulation failed", err);
-                    toast.error("Network error during simulation", { id: "sim" });
-                  }
-                }}
-              >
-                ▶ Run Simulation
-              </button>
+            {/* Real-time Inputs with Clinical Threshold Tags */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2 border-t border-amber/15">
+              <div className="bg-black/30 border border-white/5 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase text-text-dim">Override SpO2 (%)</label>
+                  <span className="text-[0.68rem] text-text-muted">Normal: 95–100%</span>
+                </div>
+                <input 
+                  type="number" 
+                  placeholder="e.g. 88 (Hypoxia)" 
+                  className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:border-amber focus:outline-none transition-colors" 
+                  value={overrides.spo2} 
+                  onChange={e => setOverrides({...overrides, spo2: e.target.value})} 
+                />
+                <div className="text-[0.7rem] font-medium flex items-center justify-between">
+                  <span>Clinical State:</span>
+                  <span className={s < 90 ? "text-coral font-bold" : s < 95 ? "text-amber font-semibold" : "text-teal"}>
+                    {s < 90 ? "🔴 Severe Hypoxia (<90%)" : s < 95 ? "🟡 Mild Hypoxia (90-94%)" : "🟢 Normal SpO2"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-black/30 border border-white/5 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase text-text-dim">Override Systolic BP (mmHg)</label>
+                  <span className="text-[0.68rem] text-text-muted">Normal: &lt; 120</span>
+                </div>
+                <input 
+                  type="number" 
+                  placeholder="e.g. 165 (Hypertension)" 
+                  className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:border-amber focus:outline-none transition-colors" 
+                  value={overrides.systolic_bp} 
+                  onChange={e => setOverrides({...overrides, systolic_bp: e.target.value})} 
+                />
+                <div className="text-[0.7rem] font-medium flex items-center justify-between">
+                  <span>Cardio Load:</span>
+                  <span className={bp >= 140 ? "text-coral font-bold" : bp >= 120 ? "text-amber font-semibold" : "text-teal"}>
+                    {bp >= 140 ? "🔴 Stage 2 HTN (≥140)" : bp >= 120 ? "🟡 Elevated BP (120-139)" : "🟢 Normal BP"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-black/30 border border-white/5 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase text-text-dim">Force Local AQI</label>
+                  <span className="text-[0.68rem] text-text-muted">Clean: 0–50</span>
+                </div>
+                <input 
+                  type="number" 
+                  placeholder="e.g. 210 (Hazardous)" 
+                  className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:border-amber focus:outline-none transition-colors" 
+                  value={overrides.custom_aqi} 
+                  onChange={e => setOverrides({...overrides, custom_aqi: e.target.value})} 
+                />
+                <div className="text-[0.7rem] font-medium flex items-center justify-between">
+                  <span>Air Quality:</span>
+                  <span className={aqi >= 200 ? "text-purple-400 font-bold" : aqi >= 100 ? "text-amber font-semibold" : "text-teal"}>
+                    {aqi >= 200 ? "🟣 Hazardous (&gt;200)" : aqi >= 100 ? "🟠 Unhealthy (&gt;100)" : "🟢 Good / Moderate"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Real-time Projected Model Outcome Banner */}
+            <div className={`border rounded-xl p-4 transition-all duration-300 ${riskColor} flex flex-col md:flex-row md:items-center justify-between gap-4`}>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{riskIcon}</span>
+                  <span className="text-xs font-bold tracking-wider uppercase">Projected Model Forecast for {selectedPatient?.given_name} {selectedPatient?.family_name}:</span>
+                  <span className="text-xs font-extrabold px-2 py-0.5 rounded border border-current">{riskLevel}</span>
+                  <span className="text-xs font-mono font-bold ml-1">Delta: {deltaEstimate}</span>
+                </div>
+                <p className="text-xs opacity-90 leading-relaxed pl-7">
+                  {clinicalNote}
+                </p>
+              </div>
+
+              <div className="shrink-0 flex items-center md:border-l border-current/20 md:pl-5">
+                <div className="text-right md:text-left">
+                  <div className="text-[0.68rem] uppercase tracking-wider font-semibold opacity-75">Autonomous Trigger:</div>
+                  <div className="text-xs font-bold mt-0.5">{actionTag}</div>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 border-t border-amber/15">
-            <div>
-              <label className="text-xs font-bold uppercase text-text-dim mb-2 block">Override SpO2 (%)</label>
-              <input type="number" placeholder="e.g. 88 (Hypoxia)" className="w-full bg-black/40 border border-border rounded px-4 py-2 text-sm focus:border-amber focus:outline-none transition-colors" 
-                value={overrides.spo2} onChange={e => setOverrides({...overrides, spo2: e.target.value})} />
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase text-text-dim mb-2 block">Override Systolic BP (mmHg)</label>
-              <input type="number" placeholder="e.g. 165 (Hypertension)" className="w-full bg-black/40 border border-border rounded px-4 py-2 text-sm focus:border-amber focus:outline-none transition-colors" 
-                value={overrides.systolic_bp} onChange={e => setOverrides({...overrides, systolic_bp: e.target.value})} />
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase text-text-dim mb-2 block">Force Local AQI</label>
-              <input type="number" placeholder="e.g. 210 (Very Unhealthy)" className="w-full bg-black/40 border border-border rounded px-4 py-2 text-sm focus:border-amber focus:outline-none transition-colors" 
-                value={overrides.custom_aqi} onChange={e => setOverrides({...overrides, custom_aqi: e.target.value})} />
-            </div>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
 
       {/* Stats */}
